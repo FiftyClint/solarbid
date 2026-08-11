@@ -14,7 +14,7 @@ polygon dataset has **not** been ingested yet — see [Blocked](#blocked).
 
 ```bash
 pip install -r requirements.txt
-python -m pytest tests/          # 23 passing, synthetic geometry
+python -m pytest tests/          # 35 passing, synthetic geometry
 python scripts/run_spike.py      # needs the dataset (see below)
 ```
 
@@ -40,7 +40,8 @@ out-of-band and drop it in `./data/`. Everything downstream then runs.
 | Find | `sites.py` | Clip to the plant catchment, screen on shape, cluster houses into farms |
 | Load | `load.py` | Floor area → birds → live weight → annual kWh **band** |
 | Size | `siting.py` | Roof and ground capacity, then Act 278-aware sizing |
-| Gate | `incentives.py` | Dated ITC and REAP eligibility rules |
+| Gate | `incentives.py` | Dated ITC rate resolution (base + adders), REAP status |
+| Finance | `finance.py` | Net cost after credit, bonus depreciation and grant |
 
 **Finding houses is the easy part.** Microsoft already published a U-Net trained
 on 1m USDA NAIP imagery *and* the resulting national polygon set, so stage one
@@ -77,7 +78,7 @@ The gap this opens is the central design insight:
 4-house farm, 86,000 sq ft under roof
   load             : 150,309 kWh/yr  (range 68,322 – 283,537)
   roof capacity    : 426 kW DC       ← physical
-  recommended      :  50 kW DC       ← economic, at 30% ITC
+  recommended      : 150 kW DC       ← economic, at the full 50% stack
 ```
 
 Surface is never the constraint. Self-consumption is.
@@ -91,32 +92,64 @@ ownership. Both need verification before a quote goes out.
 
 ## Incentives are dated gates, not constants
 
-Both incentives that move a poultry solar deal are mid-transition, so
+Every incentive that moves a poultry solar deal is mid-transition, so
 `incentives.py` takes a date and returns a status with its basis attached.
+Anything unresolvable from public data is reported as **unresolved** rather
+than silently assumed favourable.
 
-- **Federal ITC (Sec. 48E).** OBBBA set a begin-construction deadline of
-  2026-07-04 — **already passed**. A project starting now needs a
-  placed-in-service date on or before **2027-12-31**, or documented
-  safe-harboured equipment. Real, closing, and it belongs in the sales
-  conversation.
-- **USDA REAP.** Grant awards **halted 2026-03-31** pending new regulations
-  under EO 14315. Processing stopped; prior applicants must reapply. Guaranteed
-  loans continue. Any proposal showing a REAP grant line today quotes a program
-  not accepting grant applications.
+**Target: placed in service by 2027-12-31.** OBBBA's begin-construction deadline
+(2026-07-04) has passed, so that date is the surviving path to Sec. 48E — and it
+sets the schedule for everything else.
 
-Run both gates today and the stack returns **0%** — at which point
-`recommend_size_kw()` correctly returns no system, because at $2.35/W and 12¢
-retail, unsubsidised simple payback is ~13.5 years even at perfect
-self-consumption. That is the finding, not a bug:
+- **Base ITC — 30%.** Systems under **1 MW AC** are deemed to satisfy prevailing
+  wage and apprenticeship, taking the full 30% *and* full 10-point adders with
+  no compliance burden. Farm systems run 50–150 kW, an order of magnitude
+  inside. This is the most favourable structural fact in the model.
+- **Domestic content — +10%.** Adjusted percentage threshold is **50%** for a
+  2026 construction start, 55% for 2027. Evidenced via the Notice 2025-08
+  elective safe harbor tables.
+- **Energy community — +10%.** Per **census tract**, from IRS Notice 2026-39
+  (2026-06-10). **Cannot be inferred from the county** — it must be looked up per
+  site at [energycommunities.gov](https://energycommunities.gov/energy-community-tax-credit-bonus/).
+  Randolph County status is currently unresolved in this repo.
+- **Bonus depreciation — 100%, permanent** for property acquired after
+  2025-01-19. Depreciable basis is reduced by half the ITC, so a 50% credit
+  leaves 75% of cost depreciable. Note OBBBA also repealed 5-year MACRS for
+  solar where construction began after 2024-12-31 — moot under full bonus, but it
+  bites hard if the grower elects out.
+- **FEOC / material assistance — applies to every project here.** Facilities
+  beginning construction after 2025-12-31 must clear a material assistance cost
+  ratio. Failing it **denies the credit entirely**, not just the adders. Safe
+  harbor tables in Notice 2026-15 (2026-02-12); supplier attestations needed
+  before ordering.
+- **USDA REAP — halted 2026-03-31** pending new regulations under EO 14315.
+  Guaranteed loans continue. No grant line until it reopens.
 
-| Incentive stack | Recommended | % of load |
-|---|---|---|
-| None (today) | 0 kW | — |
-| 30% ITC | 50 kW | 48% |
-| ITC + REAP restored | 85 kW | 82% |
+### What the stack does to a four-house farm
 
-The commercial question this raises is whether the near-term play is
-safe-harboured equipment and a 2027 energisation, rather than a 2028 pipeline.
+Gross $2.35/W, load 150,309 kWh/yr, roof capacity 426 kW DC:
+
+| Scenario | ITC | Grower tax rate | Net $/W | Size | Payback |
+|---|---|---|---|---|---|
+| Gross cost, no tax benefit | 0% | 0% | $2.35 | 0 kW | — |
+| Depreciation only, no ITC | 0% | 30% | $1.65 | 50 kW | 10.4 yr |
+| Base ITC + depreciation | 30% | 30% | $1.05 | 95 kW | 7.6 yr |
+| + Domestic content | 40% | 30% | $0.85 | 130 kW | 6.9 yr |
+| **Full stack (DC + EC)** | **50%** | **30%** | **$0.65** | **150 kW** | **5.7 yr** |
+| Full stack, low tax appetite | 50% | 10% | $1.00 | 100 kW | 7.4 yr |
+| Full stack, no tax appetite | 50% | 0% | $1.18 | 85 kW | 8.2 yr |
+
+Two things fall out of this. The adders don't just cut the price — they change
+the **system**, tripling the economically sensible array from 50 kW to 150 kW,
+because cheaper capacity stays worth building further up the declining
+self-consumption curve.
+
+And **the grower's tax rate moves the answer nearly as much as the adders do**.
+Net cost is a property of the buyer, not the project. Many contract growers
+cannot absorb a 50% credit plus full first-year expensing, and a Sec. 6418
+transfer on a single 50 kW system realises ~$54k of a $58.7k credit before
+diligence cost — which only works aggregated across farms. Confirm tax capacity
+with the grower's CPA before any of these numbers become a price.
 
 ## Known limitations
 
@@ -134,9 +167,20 @@ safe-harboured equipment and a 2027 energisation, rather than a 2028 pipeline.
 - **Co-op tariffs are unmodelled.** Craighead, Clay County, Farmers and Woodruff
   each set their own rates and demand charges, with no clean API. Hand-entry per
   utility, verified per quote.
-- **Incentive stacking is naive.** `total_incentive_fraction()` sums fractions;
-  real stacking has ordering and basis-reduction rules (REAP grant proceeds
-  reduce ITC basis).
+- **Energy community status is unresolved.** Worth 10 points — a third of the
+  credit — and it is a per-tract lookup against Notice 2026-39 that has not been
+  run for the Peco footprint. Do this before quoting; the two most likely
+  qualifying routes here are coal-closure tract adjacency and the statistical
+  area criterion.
+- **Domestic content is asserted, not evidenced.** The model takes a boolean.
+  Actually claiming it needs a bill of materials clearing 50% adjusted
+  percentage, run through the Notice 2025-08 safe harbor tables.
+- **FEOC compliance is flagged, not computed.** Failing the material assistance
+  cost ratio denies the credit outright, so this needs a real supplier
+  attestation workflow before equipment is ordered.
+- **Tax capacity is an input, not a check.** `project_finance()` takes the
+  grower's marginal rate on faith. It moves net cost nearly as much as the
+  adders do, and contract growers frequently cannot absorb the full stack.
 
 ## What this does not produce
 
@@ -152,4 +196,9 @@ parcel and land cover for ground, and a live check of the incentive stack.
 - [UADA — Poultry Farm Energy Use Evaluation Program](https://www.uaex.uada.edu/environment-nature/energy/conservation.aspx)
 - [UADA — Arkansas net metering policy](https://www.uaex.uada.edu/environment-nature/energy/solar/net-metering.aspx)
 - [Navigating safe-harbor rules for Sec. 48E facilities](https://www.thetaxadviser.com/issues/2026/feb/navigating-safe-harbor-rules-for-solar-and-wind-sec-48e-facilities/) · [IRS Notice 2025-42](https://www.irs.gov/pub/irs-drop/n-25-42.pdf)
+- [IRS — prevailing wage and apprenticeship FAQ](https://www.irs.gov/credits-deductions/frequently-asked-questions-about-the-prevailing-wage-and-apprenticeship-under-the-inflation-reduction-act) (one-megawatt exception)
+- [IRS — domestic content bonus credit](https://www.irs.gov/credits-deductions/domestic-content-bonus-credit) · [Notice 2025-08 elective safe harbor](https://www.irs.gov/pub/irs-drop/n-25-08.pdf)
+- [DOE — Energy Community Tax Credit Bonus mapper](https://energycommunities.gov/energy-community-tax-credit-bonus/) · [Holland & Knight on Notice 2026-39](https://www.hklaw.com/en/insights/publications/2026/07/irs-releases-2026-energy-community-bonus-credit-updates)
+- [Morgan Lewis — Notice 2026-15 material assistance cost ratio](https://www.morganlewis.com/pubs/2026/02/meeting-the-macr-irss-interim-guidance-addresses-obbbas-material-assistance-feoc-limitation) · [Bracewell on FEOC guidance](https://www.bracewell.com/resources/treasury-and-irs-issue-guidance-on-foreign-entity-of-concern-rules-for-clean-energy-tax-credits/)
+- [SEIA — MACRS depreciation of solar energy property](https://seia.org/depreciation-solar-energy-property-macrs/)
 - [NSAC — USDA halts rural energy investments](https://sustainableagriculture.net/blog/release-usda-halts-rural-energy-efficiency-investments/)

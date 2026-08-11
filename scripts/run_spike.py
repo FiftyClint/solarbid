@@ -13,6 +13,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+from datetime import date
 import sys
 from pathlib import Path
 
@@ -20,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from solarbid import data, incentives, sites  # noqa: E402
 from solarbid.config import AOI_RADIUS_MILES, PECO_POCAHONTAS, Assumptions  # noqa: E402
+from solarbid.finance import project_finance  # noqa: E402
 from solarbid.load import attach_load_estimates  # noqa: E402
 from solarbid.siting import (  # noqa: E402
     open_ground_area_ft2,
@@ -28,11 +30,47 @@ from solarbid.siting import (  # noqa: E402
 )
 
 
+# Representative farm system size, used to resolve the ITC rate once for the
+# whole run. Every system in this pipeline sits far under the 1 MW AC threshold,
+# so the rate does not vary farm to farm.
+REPRESENTATIVE_KW_AC = 50.0
+
+
+def _tristate(value: str) -> bool | None:
+    """yes/no/unknown -- unknown must never resolve to a favourable assumption."""
+    return {"yes": True, "no": False, "unknown": None}[value]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--radius", type=float, default=AOI_RADIUS_MILES)
     ap.add_argument("--out", type=Path, default=Path("out/peco_farms.csv"))
     ap.add_argument("--cache", type=Path, default=None)
+    ap.add_argument(
+        "--placed-in-service",
+        type=date.fromisoformat,
+        default=date(2027, 12, 1),
+        help="Target energisation date. Must be on or before 2027-12-31 for the ITC.",
+    )
+    ap.add_argument(
+        "--domestic-content",
+        type=_tristate,
+        choices=["yes", "no", "unknown"],
+        default="unknown",
+    )
+    ap.add_argument(
+        "--energy-community",
+        type=_tristate,
+        choices=["yes", "no", "unknown"],
+        default="unknown",
+        help="Per census tract, from IRS Notice 2026-39. Do not infer from county.",
+    )
+    ap.add_argument(
+        "--tax-rate",
+        type=float,
+        default=0.30,
+        help="Grower's combined marginal rate for depreciation deductions.",
+    )
     args = ap.parse_args()
 
     assumptions = Assumptions()
@@ -61,14 +99,33 @@ def main() -> int:
     farms = attach_load_estimates(farms, assumptions.load)
     print(f"  grouped into farms: {len(farms):,}\n")
 
-    # Incentive stack gates the economics, so resolve it once up front and
-    # print it -- a run that silently assumes 30% ITC is worse than useless.
-    stack = incentives.stack()
-    print("Incentive stack:")
-    for status in stack:
-        print(f"  {status}")
-    incentive_fraction = incentives.total_incentive_fraction(stack)
-    print(f"  -> {incentive_fraction:.0%} of project cost covered\n")
+    # Resolve the incentive stack once up front and print it. A run that
+    # silently assumes 30% ITC is worse than useless.
+    itc = incentives.itc_rate(
+        system_kw_ac=REPRESENTATIVE_KW_AC,
+        expected_placed_in_service=args.placed_in_service,
+        domestic_content=args.domestic_content,
+        energy_community=args.energy_community,
+    )
+    print(f"Section 48E: {itc.summary()}")
+    print(f"  {itc.basis}")
+    for condition in itc.conditions:
+        print(f"  [must hold]   {condition}")
+    for open_item in itc.unresolved:
+        print(f"  [UNRESOLVED]  {open_item}")
+    print(f"  {incentives.reap_status()}\n")
+
+    fin = project_finance(
+        system_kw=REPRESENTATIVE_KW_AC,
+        cost_per_watt=assumptions.pricing.ground_cost_per_watt,
+        itc_rate=itc.total_rate,
+        tax_rate=args.tax_rate,
+    )
+    print(
+        f"Net cost: ${fin.net_cost_per_watt:.2f}/W "
+        f"(gross ${fin.gross_cost_per_watt:.2f}/W, "
+        f"{fin.total_benefit_fraction:.0%} covered by credit and depreciation)\n"
+    )
 
     # Per-farm siting: both mounting options, then Act 278-aware sizing.
     roof_kw, ground_kw, rec_kw = [], [], []
@@ -88,7 +145,7 @@ def main() -> int:
                 max_kw_dc=max(r_kw, g_kw),
                 tariff=assumptions.tariff,
                 pricing=assumptions.pricing,
-                incentive_fraction=incentive_fraction,
+                net_cost_per_watt=fin.net_cost_per_watt,
             )
         )
 

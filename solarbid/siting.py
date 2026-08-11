@@ -144,7 +144,7 @@ def recommend_size_kw(
     pricing: Pricing | None = None,
     mount: str = "ground",
     target_payback_years: float = 12.0,
-    incentive_fraction: float = 0.0,
+    net_cost_per_watt: float | None = None,
 ) -> float:
     """Largest array whose marginal kW still pays back inside the target.
 
@@ -154,18 +154,22 @@ def recommend_size_kw(
     spills to export at avoided cost. We walk the array up in 5 kW steps and
     stop when the marginal kW no longer earns out.
 
-    `incentive_fraction` matters more than it looks. At current pricing and a
-    12c retail rate, unsubsidised simple payback is roughly 13.5 years, which
-    clears no reasonable target -- so with the ITC gone and REAP halted, this
-    function correctly returns zero. That is not a bug to work around; it is
-    the finding. Pass the fraction actually available from incentives.stack().
+    `net_cost_per_watt` drives the answer more than any other input. At gross
+    pricing and a 12c retail rate, unsubsidised simple payback is roughly 13.5
+    years, which clears no reasonable target -- so with no incentives this
+    correctly returns zero. Pass the net figure from
+    finance.project_finance(...).net_cost_per_watt to size against the real
+    after-tax cost.
     """
     tariff = tariff or ArkansasTariff()
     pricing = pricing or Pricing()
-    gross_cost_per_watt = (
-        pricing.ground_cost_per_watt if mount == "ground" else pricing.roof_cost_per_watt
-    )
-    cost_per_watt = gross_cost_per_watt * (1.0 - incentive_fraction)
+    if net_cost_per_watt is None:
+        net_cost_per_watt = (
+            pricing.ground_cost_per_watt
+            if mount == "ground"
+            else pricing.roof_cost_per_watt
+        )
+    cost_per_watt = net_cost_per_watt
 
     if annual_load_kwh <= 0 or max_kw_dc <= 0:
         return 0.0
