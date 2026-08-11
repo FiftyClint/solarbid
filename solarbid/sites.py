@@ -110,9 +110,10 @@ def screen_barns(
         & out["width_m"].between(flt.min_width_m, flt.max_width_m)
     )
 
-    # The released dataset does not guarantee a probability column name across
-    # versions; only apply the confidence gate when we actually find one.
-    for col in ("probability", "prob", "pred_prob"):
+    # The released dataset names its predicted probability column "p"; older
+    # exports use longer names. Only apply the confidence gate when we find one,
+    # but do find it -- silently skipping it lets low-confidence noise through.
+    for col in ("p", "probability", "prob", "pred_prob"):
         if col in out.columns:
             keep &= out[col].fillna(1.0) >= flt.min_probability
             break

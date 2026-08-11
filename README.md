@@ -9,13 +9,29 @@ with an honest uncertainty band attached.
 
 ## Status
 
-The site-finding, load, sizing, incentive and quoting logic is implemented and
-tested. The barn polygon dataset has **not** been ingested yet — see
-[Getting the barn data in](#getting-the-barn-data-in).
+Running against real data. First pass over the Peco Pocahontas draw area
+(50 mi radius), full 50% ITC stack at $2.10/W:
+
+| | |
+|---|---|
+| Houses detected | 945 |
+| Farms | 277 (median 3 houses) |
+| Estimated load | 61.2 GWh/yr |
+| Recommended capacity | 36.7 MW DC |
+| Farms with ≥4 houses | 120 — **76% of the pipeline MW** |
+
+Largest single prospect is a 12-house farm at ~515 kW. Targeting the 120 farms
+of four houses or more captures three quarters of the opportunity.
+
+**Read the count as a floor.** Arkansas coverage in the source dataset is 2017
+NAIP; Peco opened Pocahontas in 2016 and expanded through 2021, so much of the
+grower buildout is simply not in this imagery. That 945 lands close to Peco's
+~1,000-house regional figure is encouraging but may be coincidental — the
+imagery predates the network the figure describes.
 
 ```bash
 pip install -r requirements.txt
-python -m pytest tests/          # 51 passing, synthetic geometry
+python -m pytest tests/          # 63 passing
 python scripts/clip_to_aoi.py    # one-time: build the committable AOI extract
 python scripts/run_spike.py      # count farms, size systems, price them
 ```

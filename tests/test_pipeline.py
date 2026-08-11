@@ -25,7 +25,8 @@ from solarbid.siting import (
 
 FT = 0.3048
 HOUSE_LEN_M = 500 * FT   # 152.4 m, a typical modern tunnel house
-HOUSE_WID_M = 43 * FT    # 13.1 m
+HOUSE_WID_M = 54 * FT    # 16.5 m -- modern commercial width; the screen
+                         # deliberately rejects narrower legacy houses
 
 ORIGIN_E, ORIGIN_N = 320_000.0, 4_015_000.0   # Randolph County, UTM 15N
 
@@ -45,15 +46,15 @@ def _house(offset_e: float, offset_n: float):
 @pytest.fixture
 def synthetic_barns() -> gpd.GeoDataFrame:
     """Two farms: four houses together, two houses 2 km away."""
-    geoms = [_house(i * 25.0, 0.0) for i in range(4)]
-    geoms += [_house(2000.0 + i * 25.0, 0.0) for i in range(2)]
+    geoms = [_house(i * 30.0, 0.0) for i in range(4)]
+    geoms += [_house(2000.0 + i * 30.0, 0.0) for i in range(2)]
     return gpd.GeoDataFrame(geometry=geoms, crs=WORKING_CRS)
 
 
 @pytest.fixture
 def four_house_farm() -> float:
     """Total floor area of a representative four-house Peco farm, sq ft."""
-    return 4 * 500 * 43
+    return 4 * 500 * 54
 
 
 class TestGeometry:
@@ -95,26 +96,26 @@ class TestGeometry:
 
 class TestLoad:
     def test_single_house_lands_in_the_expected_range(self):
-        band = estimate_load(500 * 43)
+        band = estimate_load(500 * 54)
         assert 15_000 < band.low_kwh < 30_000
         assert 30_000 < band.mid_kwh < 55_000
         assert 60_000 < band.high_kwh < 110_000
 
     def test_band_is_wide_enough_to_require_metered_validation(self):
-        band = estimate_load(500 * 43)
+        band = estimate_load(500 * 54)
         assert band.spread_ratio == pytest.approx(83 / 20, rel=1e-9)
         assert requires_metered_validation(band), (
             "geometry alone must never be treated as quote-grade"
         )
 
     def test_load_scales_linearly_with_floor_area(self):
-        one = estimate_load(500 * 43)
-        four = estimate_load(4 * 500 * 43)
+        one = estimate_load(500 * 54)
+        four = estimate_load(4 * 500 * 54)
         assert four.mid_kwh == pytest.approx(4 * one.mid_kwh, rel=1e-9)
 
     def test_big_bird_program_raises_load(self):
-        standard = estimate_load(500 * 43, LoadModel())
-        big_bird = estimate_load(500 * 43, LoadModel(avg_market_weight_lb=9.2))
+        standard = estimate_load(500 * 54, LoadModel())
+        big_bird = estimate_load(500 * 54, LoadModel(avg_market_weight_lb=9.2))
         assert big_bird.mid_kwh > standard.mid_kwh
 
 
@@ -360,7 +361,7 @@ class TestBudgetaryQuote:
         from solarbid.quote import budgetary_quote
         from solarbid.siting import roof_capacity_kw as roof_cap
 
-        floor = 4 * 500 * 43
+        floor = 4 * 500 * 54
         itc = incentives.itc_rate(
             system_kw_ac=150,
             quote_date=TODAY,
@@ -473,3 +474,96 @@ class TestCLI:
         tristate = self._tristate()
         with pytest.raises(argparse.ArgumentTypeError):
             tristate("maybe")
+
+
+class TestDetectionCalibration:
+    """Guards on the screen calibrated against the real Peco AOI extract."""
+
+    def _poly(self, length_ft, width_ft):
+        return gpd.GeoDataFrame(
+            geometry=[
+                box(
+                    ORIGIN_E,
+                    ORIGIN_N,
+                    ORIGIN_E + width_ft * FT,
+                    ORIGIN_N + length_ft * FT,
+                )
+            ],
+            crs=WORKING_CRS,
+        )
+
+    def test_modern_commercial_house_passes(self):
+        assert len(sites.screen_barns(self._poly(555, 68))) == 1
+
+    def test_the_smaller_outbuilding_population_is_thinned(self):
+        """Loosening the screen pulled in a distinct second population.
+
+        Those detections median 412ft x 48ft and are overwhelmingly isolated
+        singles -- hay barns, machine sheds and older small houses rather than
+        contract poultry. The screen thins that population rather than
+        eliminating it: 412 x 48 is a median, so roughly half of it sits above
+        the 400ft/45ft thresholds and still survives. Anything meaningfully
+        below either threshold is cut.
+        """
+        assert len(sites.screen_barns(self._poly(350, 48))) == 0   # too short
+        assert len(sites.screen_barns(self._poly(412, 40))) == 0   # too narrow
+        assert len(sites.screen_barns(self._poly(412, 48))) == 1   # survives
+
+    def test_narrow_legacy_house_is_rejected(self):
+        """43ft wide is below modern commercial; excluded deliberately."""
+        assert len(sites.screen_barns(self._poly(500, 43))) == 0
+
+    def test_probability_gate_reads_the_p_column(self):
+        """The released dataset names it `p`; missing it skips the gate silently."""
+        low = self._poly(555, 68).assign(p=0.05)
+        high = self._poly(555, 68).assign(p=0.80)
+        assert len(sites.screen_barns(low)) == 0
+        assert len(sites.screen_barns(high)) == 1
+
+    def test_probability_floor_is_permissive_by_design(self):
+        """Shape carries the discrimination; p only floors out noise.
+
+        In the AOI, p 0.00-0.25 detections median 511ft x 67ft at 7.8:1 aspect,
+        indistinguishable from the p 0.70+ band. A 0.50 threshold discarded
+        ~800 polygons that look exactly like poultry houses.
+        """
+        from solarbid.config import DetectionFilter
+
+        assert DetectionFilter().min_probability <= 0.30
+        mid = self._poly(555, 68).assign(p=0.35)
+        assert len(sites.screen_barns(mid)) == 1
+
+
+class TestOversizingBound:
+    """Sizing must not run away on farms with lots of open ground."""
+
+    def test_self_consumption_decays_toward_zero(self):
+        """The tabulated curve alone floors at 0.44 and never stops paying."""
+        assert self_consumed_fraction(4.0) < 0.20
+        assert self_consumed_fraction(20.0) < 0.05
+        assert self_consumed_fraction(50.0) < self_consumed_fraction(20.0)
+
+    def test_self_consumed_energy_never_exceeds_load(self):
+        """The hard physical bound behind the asymptote."""
+        for ratio in (0.5, 1.0, 2.0, 5.0, 25.0, 100.0):
+            assert self_consumed_fraction(ratio) * ratio <= 1.0
+
+    def test_single_house_farm_with_vast_open_ground_stays_sane(self):
+        """The bug: 5 MW recommended against a 35,000 kWh/yr load."""
+        load = estimate_load(500 * 54)          # one house
+        huge_ground_kw = 9_000.0                # 150m buffer around one house
+        fin = project_finance(50, Pricing().ground_cost_per_watt, 0.50, tax_rate=0.30)
+
+        kw = recommend_size_kw(
+            load.mid_kwh, huge_ground_kw, net_cost_per_watt=fin.net_cost_per_watt
+        )
+        assert kw < 100, f"one house should not warrant {kw:,.0f} kW"
+        assert kw * 1450 < 3 * load.mid_kwh
+
+    def test_recommendation_never_reaches_the_act_278_cap_on_a_farm(self):
+        load = estimate_load(4 * 500 * 54)
+        fin = project_finance(50, Pricing().ground_cost_per_watt, 0.50, tax_rate=0.30)
+        kw = recommend_size_kw(
+            load.mid_kwh, 20_000.0, net_cost_per_watt=fin.net_cost_per_watt
+        )
+        assert kw < ArkansasTariff().max_project_kw

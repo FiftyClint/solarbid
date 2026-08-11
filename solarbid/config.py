@@ -39,12 +39,31 @@ class DetectionFilter:
     shape: they are long, narrow, and highly consistent.
     """
 
-    min_probability: float = 0.5
+    # Calibrated against the real Peco AOI extract, not chosen a priori.
+    #
+    # Probability is a weak discriminator here once shape is screened: in the
+    # AOI, detections at p 0.00-0.25 median 511ft x 67ft at 7.8:1 aspect, which
+    # is indistinguishable from the p 0.70+ band at 558ft x 69ft and 7.7:1.
+    # Holding the threshold at 0.50 discarded ~800 polygons that look exactly
+    # like poultry houses. Shape does the real work; 0.30 keeps a floor against
+    # genuinely low-signal detections without throwing away the population.
+    min_probability: float = 0.30
+
     min_area_m2: float = 750.0      # ~8,000 ft2, below a real commercial house
     max_area_m2: float = 5000.0     # ~54,000 ft2, above the largest modern house
     min_aspect_ratio: float = 4.0   # houses run 8-15:1; 4 is a permissive floor
-    min_length_m: float = 90.0      # ~300 ft
-    min_width_m: float = 9.0        # ~30 ft; below this it is a fence or field edge
+
+    # Sized to MODERN COMMERCIAL houses specifically. Loosening these to 30ft
+    # and 295ft pulled in a distinct second population -- median 412ft x 48ft,
+    # mostly isolated singles -- that is hay barns, machine sheds and older
+    # small houses rather than contract poultry.
+    #
+    # The validation is the farm-size distribution: at these thresholds even
+    # house counts dominate odd ones (2:43, 4:41, 6:33, 8:14 against 3:20,
+    # 5:16, 7:2), which is what poultry farms look like because houses are
+    # built in pairs. A screen catching sheds does not produce that pattern.
+    min_length_m: float = 122.0     # 400 ft
+    min_width_m: float = 13.7       # 45 ft
     max_width_m: float = 25.0       # ~82 ft
 
 
@@ -186,4 +205,9 @@ CAFO_DATASET_URL = (
 # built after the imagery date are absent. Re-running the released U-Net on
 # current NAIP is the fix; until then treat counts as a floor, not a census.
 CAFO_DATASET_VINTAGE = "2021-03-13"
-CAFO_IMAGERY_ERA = "2019-2020 NAIP"
+
+# Arkansas coverage in the released file is 2017 NAIP (with a little 2014), not
+# the 2019-20 assumed before the extract was inspected. Peco opened Pocahontas
+# in 2016 and expanded through 2021, so this imagery predates most of the
+# grower buildout. Counts from it are a hard floor.
+CAFO_IMAGERY_ERA = "2017 NAIP (Arkansas)"

@@ -112,19 +112,38 @@ _SELF_CONSUMPTION_CURVE = [
 ]
 
 
+# The most of a farm's annual consumption that on-site generation can realistically
+# displace. Ventilation runs at night too, so even an enormous array cannot serve
+# all of it without storage.
+MAX_ANNUAL_LOAD_SERVED = 0.65
+
+
 def self_consumed_fraction(pv_to_load_ratio: float) -> float:
-    """Interpolate the share of generation consumed on site."""
+    """Share of generation consumed on site, bounded by physics.
+
+    The tabulated curve alone is not enough. Read off its last point, a wildly
+    oversized array would appear to self-consume 44% of its output forever,
+    which let sizing run away to the Act 278 cap on farms that happened to have
+    lots of open ground -- 5 MW recommended against a 35,000 kWh/yr load.
+
+    Self-consumed energy cannot exceed load, so the fraction is hard-bounded by
+    MAX_ANNUAL_LOAD_SERVED / ratio. That asymptote is what makes oversizing
+    stop paying.
+    """
     pts = _SELF_CONSUMPTION_CURVE
     if pv_to_load_ratio <= pts[0][0]:
         return pts[0][1]
-    if pv_to_load_ratio >= pts[-1][0]:
-        return pts[-1][1]
 
-    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
-        if x0 <= pv_to_load_ratio <= x1:
-            span = x1 - x0
-            return y0 + (y1 - y0) * ((pv_to_load_ratio - x0) / span)
-    return pts[-1][1]
+    if pv_to_load_ratio >= pts[-1][0]:
+        curve = pts[-1][1]
+    else:
+        curve = pts[-1][1]
+        for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+            if x0 <= pv_to_load_ratio <= x1:
+                curve = y0 + (y1 - y0) * ((pv_to_load_ratio - x0) / (x1 - x0))
+                break
+
+    return min(curve, MAX_ANNUAL_LOAD_SERVED / pv_to_load_ratio)
 
 
 def blended_value_per_kwh(
