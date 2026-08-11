@@ -14,7 +14,7 @@ polygon dataset has **not** been ingested yet — see [Blocked](#blocked).
 
 ```bash
 pip install -r requirements.txt
-python -m pytest tests/          # 49 passing, synthetic geometry
+python -m pytest tests/          # 51 passing, synthetic geometry
 python scripts/run_spike.py      # needs the dataset (see below)
 ```
 
@@ -101,9 +101,12 @@ The gap this opens is the central design insight:
 
 Surface is never the constraint. Self-consumption is.
 
-**3. Roof and ground are quoted side by side, not as fallback.** Roof structural
-capacity on light-gauge metal over wood trusses is a per-site engineering call
-this tool cannot make, so `roof_requires_structural_review` is always true.
+**3. Roof and ground are quoted side by side, not as fallback.** At $2.00/W
+roof against $2.10/W ground, roof wins on economics — but by ~$2,300 and 0.19
+years on a four-house farm, which is thin enough that the decision belongs to
+the site walk. Roof structural capacity on light-gauge metal over wood trusses
+is a per-site engineering call this tool cannot make, so
+`roof_requires_structural_review` is always true.
 Ground siting is worse than it looks: `open_ground_area_ft2()` finds land that is
 merely *not built on* and knows nothing about cropping, land cover, floodplain or
 ownership. Both need verification before a quote goes out.
@@ -188,10 +191,10 @@ with the grower's CPA before any of these numbers become a price.
   binding proposal.
 - **No PVWatts, deliberately.** Flat 1,450 kWh/kW is a stage-one planning
   figure. Site-specific modelling belongs in stage two, after a grower responds.
-- **Pricing is a single blended number.** $2.10/W for roof and ground alike, so
-  the two mount options currently produce identical economics and differ only in
-  their blockers. Splitting the price is what would let a quote help a grower
-  actually choose between them.
+- **Mount economics are nearly a wash.** $2.00/W roof against $2.10/W ground
+  separates a four-house farm by ~$2,300 net and 0.19 years of payback. Roof
+  wins on paper, but the margin is thin enough that structural feasibility and
+  land availability should decide it, not the spreadsheet.
 - **Co-op tariffs are unmodelled.** Craighead, Clay County, Farmers and Woodruff
   each set their own rates and demand charges, with no clean API. Hand-entry per
   utility, verified per quote.

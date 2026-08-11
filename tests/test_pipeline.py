@@ -424,3 +424,15 @@ class TestBudgetaryQuote:
         q = self._quote(tax_rate=0.0)
         assert q.preferred.viable
         assert q.preferred.payback_years > self._quote().preferred.payback_years
+
+    def test_roof_beats_ground_on_economics_where_structure_allows(self):
+        """The 10c gap is what makes the mount comparison meaningful."""
+        q = self._quote()
+        assert q.roof.payback_years < q.ground.payback_years
+        assert q.preferred.mount == "roof"
+
+    def test_roof_advantage_is_conditional_on_the_structural_review(self):
+        """Cheaper on paper is not cheaper if the trusses cannot carry it."""
+        q = self._quote()
+        assert q.preferred.mount == "roof"
+        assert any("structural review" in b for b in q.preferred.blockers)

@@ -148,12 +148,14 @@ class ArkansasTariff:
 class Pricing:
     """Installed cost before incentives, in $/W DC.
 
-    $2.10/W is our quoted price for this program, roof and ground alike.
-    Mounting type changes the engineering and the site work, not the number we
-    put in front of a grower.
+    Roof carries no racking ballast, no trenching and no site prep, so it comes
+    in a dime under ground. That 10c gap is what makes the mount comparison on
+    a quote meaningful: roof wins on economics wherever the structure can
+    actually carry it, which is exactly the question the structural review
+    answers.
     """
 
-    roof_cost_per_watt: float = 2.10
+    roof_cost_per_watt: float = 2.00
     ground_cost_per_watt: float = 2.10
 
 
