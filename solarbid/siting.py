@@ -117,8 +117,19 @@ _SELF_CONSUMPTION_CURVE = [
 # all of it without storage.
 MAX_ANNUAL_LOAD_SERVED = 0.65
 
+# With storage, midday output that would otherwise export at avoided cost gets
+# shifted into night ventilation load, so the ceiling rises. Poultry suits this
+# better than most loads because the fans never fully stop.
+#
+# PLACEHOLDER: this needs an 8760 with real battery dispatch against a real
+# tariff before it drives a proposal. It is here so storage is not silently
+# valued at zero.
+MAX_ANNUAL_LOAD_SERVED_WITH_STORAGE = 0.85
 
-def self_consumed_fraction(pv_to_load_ratio: float) -> float:
+
+def self_consumed_fraction(
+    pv_to_load_ratio: float, max_load_served: float = MAX_ANNUAL_LOAD_SERVED
+) -> float:
     """Share of generation consumed on site, bounded by physics.
 
     The tabulated curve alone is not enough. Read off its last point, a wildly
@@ -143,16 +154,35 @@ def self_consumed_fraction(pv_to_load_ratio: float) -> float:
                 curve = y0 + (y1 - y0) * ((pv_to_load_ratio - x0) / (x1 - x0))
                 break
 
-    return min(curve, MAX_ANNUAL_LOAD_SERVED / pv_to_load_ratio)
+    return min(curve, max_load_served / pv_to_load_ratio)
 
 
 def blended_value_per_kwh(
-    pv_to_load_ratio: float, tariff: ArkansasTariff | None = None
+    pv_to_load_ratio: float,
+    tariff: ArkansasTariff | None = None,
+    max_load_served: float = MAX_ANNUAL_LOAD_SERVED,
 ) -> float:
     """Average value of a generated kWh once exports are priced at avoided cost."""
     tariff = tariff or ArkansasTariff()
-    sc = self_consumed_fraction(pv_to_load_ratio)
+    sc = self_consumed_fraction(pv_to_load_ratio, max_load_served)
     return sc * tariff.retail_rate_per_kwh + (1 - sc) * tariff.export_credit_per_kwh
+
+
+def storage_arbitrage_per_kwh(tariff: ArkansasTariff | None = None) -> float:
+    """Value of moving one kWh from export to on-site use.
+
+    This is the whole storage case under Act 278. Exported power earns avoided
+    cost; the same kWh consumed on site avoids the retail rate. The spread is
+    what a battery captures, and it is far wider here than it was under
+    one-to-one net metering, where the spread was zero.
+
+    Not included, because it needs the co-op tariff: demand charge reduction.
+    Metered poultry farms in this footprint run a load factor near 0.35, which
+    is peaky enough that demand charges are likely a meaningful share of the
+    bill and a battery would cut them.
+    """
+    tariff = tariff or ArkansasTariff()
+    return tariff.retail_rate_per_kwh - tariff.export_credit_per_kwh
 
 
 def recommend_size_kw(

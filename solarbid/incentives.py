@@ -97,6 +97,19 @@ ENERGY_COMMUNITY_SAFE_HARBOR = "Notice 2023-29 beginning-of-construction safe ha
 FEOC_APPLIES_TO_CONSTRUCTION_AFTER = date(2025, 12, 31)
 FEOC_GUIDANCE = "Notice 2026-15 (2026-02-12)"
 
+# --- Technology timelines --------------------------------------------------
+# OBBBA hit solar and wind far harder than the rest of 48E. Storage keeps the
+# original tech-neutral runway: full credit for construction beginning through
+# 2033, then 75% in 2034, 50% in 2035, gone from 2036.
+#
+# The practical consequence on a poultry farm is that solar and storage are on
+# different clocks. Solar has to be running by 2027-12-31. Storage does not, so
+# it can be added later, or done on its own by a grower who misses the solar
+# window entirely.
+STORAGE_FULL_CREDIT_BOC_THROUGH = 2033
+STORAGE_STEPDOWN = {2034: 0.75, 2035: 0.50}
+STORAGE_CREDIT_ENDS_FROM = 2036
+
 # --- USDA REAP -------------------------------------------------------------
 REAP_GRANTS_HALTED_ON = date(2026, 3, 31)
 
@@ -156,12 +169,35 @@ class ITCResult:
         return f"{self.total_rate:.0%} ITC ({', '.join(parts)})"
 
 
+def _storage_timing_gate(
+    quote_date: date, began_construction_on: date | None
+) -> tuple[bool, float, str]:
+    """Storage runs on the original 48E schedule, keyed to construction start."""
+    year = (began_construction_on or quote_date).year
+
+    if year <= STORAGE_FULL_CREDIT_BOC_THROUGH:
+        return True, 1.0, (
+            f"construction begins {year}, within the full-credit window through "
+            f"{STORAGE_FULL_CREDIT_BOC_THROUGH}. Storage is not subject to the "
+            "2027 placed-in-service deadline that applies to solar"
+        )
+    if year in STORAGE_STEPDOWN:
+        share = STORAGE_STEPDOWN[year]
+        return True, share, (
+            f"construction begins {year}, in the step-down: {share:.0%} of the credit"
+        )
+    return False, 0.0, (
+        f"construction begins {year}, at or after {STORAGE_CREDIT_ENDS_FROM}, when "
+        "the storage credit ends"
+    )
+
+
 def _timing_gate(
     quote_date: date,
     began_construction_on: date | None,
     expected_placed_in_service: date | None,
 ) -> tuple[bool, str]:
-    """Whether the project clears the OBBBA timing rules at all."""
+    """Whether a solar project clears the OBBBA timing rules at all."""
     if began_construction_on and began_construction_on <= ITC_BEGIN_CONSTRUCTION_DEADLINE:
         pis = expected_placed_in_service
         if pis is None or pis <= ITC_CONTINUITY_DEADLINE:
@@ -199,8 +235,13 @@ def itc_rate(
     began_construction_on: date | None = None,
     domestic_content: bool | None = None,
     energy_community: bool | None = None,
+    technology: str = "solar",
 ) -> ITCResult:
     """Resolve the Section 48E rate for one project.
+
+    `technology` matters more than it looks. Solar and storage sit on different
+    OBBBA clocks, so a farm can miss the solar window and still have years of
+    runway on a battery.
 
     `domestic_content` and `energy_community` accept None for "not yet
     determined". Unknown never counts as qualifying -- it lands in
@@ -211,9 +252,15 @@ def itc_rate(
     conditions: list[str] = []
     unresolved: list[str] = []
 
-    eligible, timing_basis = _timing_gate(
-        quote_date, began_construction_on, expected_placed_in_service
-    )
+    stepdown = 1.0
+    if technology == "storage":
+        eligible, stepdown, timing_basis = _storage_timing_gate(
+            quote_date, began_construction_on
+        )
+    else:
+        eligible, timing_basis = _timing_gate(
+            quote_date, began_construction_on, expected_placed_in_service
+        )
     if not eligible:
         return ITCResult(
             total_rate=0.0,
@@ -287,7 +334,7 @@ def itc_rate(
         )
 
     return ITCResult(
-        total_rate=base + dc_adder + ec_adder,
+        total_rate=(base + dc_adder + ec_adder) * stepdown,
         base_rate=base,
         domestic_content_adder=dc_adder,
         energy_community_adder=ec_adder,

@@ -854,3 +854,70 @@ class TestAccounts:
         geometry = estimate_load(6 * 31_000)
         assert metered.spread_ratio < 2.0
         assert geometry.spread_ratio > 4.0
+
+
+class TestStorage:
+    """Storage runs on a different clock and lifts the self-consumption ceiling."""
+
+    def test_storage_is_not_on_the_solar_2027_cliff(self):
+        """A grower who misses the solar window still has runway on a battery."""
+        after_solar_window = date(2028, 6, 1)
+        solar = incentives.itc_rate(
+            200, quote_date=after_solar_window,
+            expected_placed_in_service=date(2029, 1, 1),
+        )
+        storage = incentives.itc_rate(
+            200, quote_date=after_solar_window,
+            expected_placed_in_service=date(2029, 1, 1),
+            domestic_content=True, energy_community=True, technology="storage",
+        )
+        assert not solar.eligible
+        assert storage.eligible
+        assert storage.total_rate == pytest.approx(0.50)
+
+    def test_storage_steps_down_after_2033(self):
+        full = incentives.itc_rate(
+            200, quote_date=date(2033, 6, 1), began_construction_on=date(2033, 6, 1),
+            domestic_content=True, energy_community=True, technology="storage",
+        )
+        stepped = incentives.itc_rate(
+            200, quote_date=date(2034, 6, 1), began_construction_on=date(2034, 6, 1),
+            domestic_content=True, energy_community=True, technology="storage",
+        )
+        assert full.total_rate == pytest.approx(0.50)
+        assert stepped.total_rate == pytest.approx(0.375)
+
+    def test_storage_credit_ends_in_2036(self):
+        result = incentives.itc_rate(
+            200, quote_date=date(2036, 2, 1), began_construction_on=date(2036, 2, 1),
+            technology="storage",
+        )
+        assert not result.eligible
+
+    def test_storage_raises_the_self_consumption_ceiling(self):
+        from solarbid.siting import MAX_ANNUAL_LOAD_SERVED_WITH_STORAGE
+
+        without = self_consumed_fraction(2.0)
+        with_batt = self_consumed_fraction(2.0, MAX_ANNUAL_LOAD_SERVED_WITH_STORAGE)
+        assert with_batt > without
+
+    def test_storage_justifies_a_larger_array(self):
+        from solarbid.siting import MAX_ANNUAL_LOAD_SERVED_WITH_STORAGE
+
+        load = estimate_load(4 * 500 * 54)
+        fin = project_finance(100, Pricing().roof_cost_per_watt, 0.50, tax_rate=0.30)
+        base = blended_value_per_kwh(1.5)
+        with_batt = blended_value_per_kwh(1.5, max_load_served=MAX_ANNUAL_LOAD_SERVED_WITH_STORAGE)
+        assert with_batt > base
+        assert load.mid_kwh > 0 and fin.net_cost_per_watt > 0
+
+    def test_arbitrage_is_the_whole_storage_case_under_act_278(self):
+        from solarbid.siting import storage_arbitrage_per_kwh
+
+        tariff = ArkansasTariff()
+        assert storage_arbitrage_per_kwh(tariff) == pytest.approx(
+            tariff.retail_rate_per_kwh - tariff.export_credit_per_kwh
+        )
+        # Under grandfathered 1:1 net metering the spread, and the case, vanish.
+        grandfathered = ArkansasTariff(export_credit_per_kwh=0.12)
+        assert storage_arbitrage_per_kwh(grandfathered) == pytest.approx(0.0)
