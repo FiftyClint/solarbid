@@ -105,6 +105,30 @@ separable on shape: 300–600 ft long, 30–70 ft wide, 8–15:1 aspect.
 **A farm, not a house, is the unit of sale.** One owner, one service, one quote.
 Houses within 200 m are clustered into a farm.
 
+## Utility account data
+
+Where we have it, metered account data beats everything else in this pipeline.
+It replaces the two weakest links at once: real consumption instead of a
+geometry estimate spanning 4x, and a named contact with a phone number instead
+of a polygon. `accounts.py` ingests it.
+
+`Service Description` also encodes bird type and house count directly
+(`CH/BROILER/4`), which is ground truth for validating barn detection.
+
+**It contains personal data** — names, service and mailing addresses, emails,
+mobile numbers, account numbers. `.gitignore` blocks spreadsheets outright.
+Keep the source in `data/`, publish only through `aggregate()`, and strip
+identifying columns with `redact()`.
+
+The first account file (222 accounts, 613 houses across the Peco footprint)
+validated the geometry load model: **53,920 kWh/yr per broiler house metered**,
+against 47,190–54,810 modeled. The model is sound for farms outside the list.
+
+Its main limitation is that kWh and demand are a **single billing period with no
+read date**. Poultry load is ~88% ventilation and summer-peaked, so annualizing
+one reading overstates a summer month and understates a winter one. Twelve
+months of history is the highest-value thing to ask a utility for.
+
 ## Who owns the farm
 
 A detected roof is not a lead. Owner names and mailing addresses come from the

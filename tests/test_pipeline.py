@@ -719,3 +719,95 @@ class TestOwners:
         assert report["with_owner"] == 2
         assert report["with_mailing_address"] == 2
         assert report["entity_owned"] == 1
+
+
+class TestAccounts:
+    """Utility account ingest. Real meters beat geometry estimates."""
+
+    def _frame(self):
+        return pd.DataFrame(
+            {
+                "Account": ["1001", "1002", "1003"],
+                "Name": ["A", "B", "C"],
+                "Service Address": ["x", "y", "z"],
+                "Address": ["x", "y", "z"],
+                "Service Description": [
+                    "CH/BROILER/4",
+                    "CH/EGG/1/VITAL",
+                    "CH/BROILER/6/DRAFT",
+                ],
+                "kWh's used": [18000, 5000, 27000],
+                "DEMAND in kW": [75, 20, 112],
+                "Estimated Solar in AC kW needed": [128, 34, 190],
+                "Misc E-Mail": [None, "b@x.com", None],
+                "E-Bill E-Mail Addr": ["a@x.com", None, None],
+                "Mobile Area Code": [870, 870, None],
+                "Mobile Phone": ["5551234", "5555678", None],
+            }
+        )
+
+    def test_service_description_yields_bird_type_and_house_count(self):
+        from solarbid.accounts import parse_service_description
+
+        assert parse_service_description("CH/BROILER/4") == ("BROILER", 4)
+        assert parse_service_description("CH/EGG/1/VITAL") == ("EGG", 1)
+        assert parse_service_description("CH/BROILER/6/DRAFT") == ("BROILER", 6)
+
+    def test_unparseable_description_returns_nothing_rather_than_guessing(self):
+        from solarbid.accounts import parse_service_description
+
+        assert parse_service_description("MISC ACCOUNT") == (None, None)
+
+    def test_redact_removes_every_pii_column(self):
+        from solarbid.accounts import PII_COLUMNS, redact
+
+        out = redact(self._frame())
+        for col in PII_COLUMNS:
+            assert col not in out.columns
+
+    def test_aggregate_output_carries_no_identifying_column(self):
+        from solarbid.accounts import PII_COLUMNS, aggregate, parse_service_description
+
+        df = self._frame()
+        parsed = df["Service Description"].apply(parse_service_description)
+        df["bird_type"] = [p[0] for p in parsed]
+        df["house_count"] = [p[1] for p in parsed]
+        df["period_kwh"] = df["kWh's used"]
+        df["demand_kw"] = df["DEMAND in kW"]
+
+        summary = aggregate(df)
+        for col in PII_COLUMNS:
+            assert col not in summary.columns
+
+    def test_annualization_is_flagged_as_from_one_period(self):
+        """A single billing period is not a year, and poultry load is seasonal."""
+        from solarbid.accounts import ACCOUNT_CAVEATS, AccountLoad
+
+        load = AccountLoad("ref", "BROILER", 4, 18000, 75, 216000)
+        assert load.is_annualized_from_one_period
+        assert load.kwh_per_house == pytest.approx(54000)
+        assert any("single billing period" in c for c in ACCOUNT_CAVEATS)
+
+    def test_load_factor_exposes_a_demand_driven_bill(self):
+        from solarbid.accounts import AccountLoad
+
+        peaky = AccountLoad("a", "BROILER", 4, 18000, 75, 216000)
+        assert 0.2 < peaky.load_factor < 0.5
+
+    def test_metered_load_lands_inside_the_geometry_band(self):
+        """Cross-check: the model must not be contradicted by real meters."""
+        from solarbid.accounts import AccountLoad
+
+        metered = AccountLoad("ref", "BROILER", 4, 18000, 75, 216000)
+        modeled = estimate_load(500 * 54)
+        assert modeled.low_kwh < metered.kwh_per_house < modeled.high_kwh
+
+    def test_existing_estimate_is_a_peak_rule_not_an_economic_one(self):
+        """The workbook sizes at ~1.7x demand, ignoring Act 278 export value."""
+        from solarbid.accounts import compare_to_existing_estimate
+
+        df = self._frame()
+        df["existing_estimate_kw_ac"] = df["Estimated Solar in AC kW needed"]
+        df["demand_kw"] = df["DEMAND in kW"]
+        result = compare_to_existing_estimate(df)
+        assert 1.5 < result["median_multiple_of_demand"] < 2.0

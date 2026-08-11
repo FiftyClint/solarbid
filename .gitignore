@@ -8,3 +8,10 @@ out/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Utility account data contains PII: names, addresses, emails, phones,
+# account numbers. Never commit it.
+*.xlsx
+*.xls
+*.csv
+!out/.gitkeep
