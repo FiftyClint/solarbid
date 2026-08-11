@@ -20,8 +20,10 @@ BAND_ASPECT = 1.75
 
 # The one-page sheet has less room, so a pair at 1.75 would run into the
 # footer. A wider crop keeps them full width and short enough to fit. Cropping
-# is the right answer here rather than scaling, which would distort them.
-WIDE_ASPECT = 3.2
+# is the right answer here rather than scaling, which would distort them. Both
+# frames carry a lot of dead sky and foreground dirt, so the band loses nothing
+# by being cut this thin.
+WIDE_ASPECT = 4.6
 
 # Source files as dropped in, with the vertical bias for the crop. Farm photos
 # carry a lot of sky that does nothing, so both bias downward toward the array.
