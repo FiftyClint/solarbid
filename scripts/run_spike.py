@@ -37,8 +37,18 @@ REPRESENTATIVE_KW_AC = 50.0
 
 
 def _tristate(value: str) -> bool | None:
-    """yes/no/unknown -- unknown must never resolve to a favourable assumption."""
-    return {"yes": True, "no": False, "unknown": None}[value]
+    """yes/no/unknown -- unknown must never resolve to a favourable assumption.
+
+    Validated here rather than via argparse `choices`, because argparse applies
+    `type` first and then compares the converted value against `choices` --
+    so "yes" becomes True and then fails the membership test.
+    """
+    try:
+        return {"yes": True, "no": False, "unknown": None}[value.strip().lower()]
+    except KeyError:
+        raise argparse.ArgumentTypeError(
+            f"expected one of yes/no/unknown, got {value!r}"
+        ) from None
 
 
 def main() -> int:
@@ -55,15 +65,15 @@ def main() -> int:
     ap.add_argument(
         "--domestic-content",
         type=_tristate,
-        choices=["yes", "no", "unknown"],
-        default="unknown",
+        default=None,
+        metavar="{yes,no,unknown}",
     )
     ap.add_argument(
         "--energy-community",
         type=_tristate,
-        choices=["yes", "no", "unknown"],
-        default="unknown",
-        help="Per census tract, from IRS Notice 2026-39. Do not infer from county.",
+        default=None,
+        metavar="{yes,no,unknown}",
+        help="County-level, from IRS Notice 2026-39. See energy_community_by_county().",
     )
     ap.add_argument(
         "--tax-rate",

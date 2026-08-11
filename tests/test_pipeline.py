@@ -436,3 +436,40 @@ class TestBudgetaryQuote:
         q = self._quote()
         assert q.preferred.mount == "roof"
         assert any("structural review" in b for b in q.preferred.blockers)
+
+
+class TestCLI:
+    """Guards on scripts/run_spike.py argument handling."""
+
+    def _tristate(self):
+        import importlib.util
+        from pathlib import Path
+
+        path = Path(__file__).resolve().parent.parent / "scripts" / "run_spike.py"
+        spec = importlib.util.spec_from_file_location("run_spike", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module._tristate
+
+    def test_tristate_parses_the_three_words(self):
+        """argparse applies `type` before `choices`, so validation lives here.
+
+        With choices=["yes","no","unknown"] alongside type=_tristate, "yes"
+        converts to True and then fails the membership test -- every flag was
+        rejected.
+        """
+        tristate = self._tristate()
+        assert tristate("yes") is True
+        assert tristate("no") is False
+        assert tristate("unknown") is None
+
+    def test_tristate_is_case_and_whitespace_tolerant(self):
+        tristate = self._tristate()
+        assert tristate(" YES ") is True
+
+    def test_tristate_rejects_anything_else(self):
+        import argparse
+
+        tristate = self._tristate()
+        with pytest.raises(argparse.ArgumentTypeError):
+            tristate("maybe")
