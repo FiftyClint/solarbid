@@ -11,3 +11,12 @@ Also edit at the top of `scripts/build_ad.py`:
 
 - `PHONE` — appears twice, in the masthead and the call bar
 - `BRAND` / `BRAND_DK` — currently a barn red placeholder, swap for real brand colors
+
+## Third slot
+
+| File | What it is |
+|---|---|
+| `cgf_team.jpg` | Optional. Appears bottom right of the company flyer if present. |
+
+Edit `scripts/brand.py` for `PHONE`, `ADDRESS`, `WEB` and `BRAND` colors. All
+three pieces read from it, so one change updates the set.
