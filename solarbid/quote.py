@@ -75,6 +75,7 @@ class BudgetaryQuote:
     itc: ITCResult
     quote_date: date
     caveats: list[str] = field(default_factory=list)
+    load_source: str = "geometry"   # "geometry" or "metered"
 
     @property
     def preferred(self) -> MountOption:
@@ -89,15 +90,27 @@ class BudgetaryQuote:
         """The uncertainty, stated once, for the footnotes.
 
         The grower sees a single number up front; this is where the honesty
-        about how wide it really is lives.
+        about how wide it really is lives. What the uncertainty *is* differs
+        entirely by source: a geometry estimate could be wrong about the farm,
+        while a metered figure is only uncertain about the season. Saying the
+        wrong one to a grower who knows his own bills would sink the document.
         """
+        span = (
+            f"The plausible range is {self.load_low_kwh:,.0f} to "
+            f"{self.load_high_kwh:,.0f} kWh/yr, corresponding to a system of "
+            f"{self.system_kw_low:,.0f} to {self.system_kw_high:,.0f} kW."
+        )
+        if self.load_source == "metered":
+            return (
+                "Consumption is taken from your utility account and annualized "
+                f"from a single billing period. {span} Twelve months of billing "
+                "history would remove the seasonal assumption and narrow this to "
+                "your actual usage."
+            )
         return (
-            f"Consumption is estimated from house dimensions and University of "
-            f"Arkansas audit data, not from your meter. The plausible range is "
-            f"{self.load_low_kwh:,.0f} to {self.load_high_kwh:,.0f} kWh/yr, which "
-            f"corresponds to a system of {self.system_kw_low:,.0f} to "
-            f"{self.system_kw_high:,.0f} kW. Twelve months of your utility bills "
-            f"would replace this estimate with your actual usage."
+            "Consumption is estimated from house dimensions and University of "
+            f"Arkansas audit data, not from your meter. {span} Twelve months of "
+            "your utility bills would replace this estimate with your actual usage."
         )
 
     def render(self) -> str:
@@ -298,8 +311,8 @@ def _mount_option(
         )
     if mount == "ground":
         blockers.append(
-            "Ground area estimated from imagery only. Not checked for cropping, "
-            "land cover, floodplain or ownership."
+            "Ground mount assumes suitable open land adjacent to the houses. Not "
+            "checked for cropping, land cover, floodplain or ownership."
         )
 
     if kw <= 0:
@@ -335,6 +348,7 @@ def budgetary_quote(
     pricing: Pricing | None = None,
     tariff: ArkansasTariff | None = None,
     siting: SitingModel | None = None,
+    load_source: str = "geometry",
 ) -> BudgetaryQuote:
     """Build a stage-one quote for one farm.
 
@@ -370,8 +384,8 @@ def budgetary_quote(
         pricing, tariff, siting,
     )
 
+    # range_note already asks for twelve months, so do not ask twice.
     caveats = [
-        "Twelve months of interval data to confirm consumption and load shape.",
         "Structural review if roof mounted; parcel and land cover if ground mounted.",
         "Utility tariff and interconnection terms confirmed for this meter.",
         "Tax capacity confirmed with your CPA -- the credit and first-year "
@@ -400,4 +414,5 @@ def budgetary_quote(
         itc=itc,
         quote_date=quote_date,
         caveats=caveats,
+        load_source=load_source,
     )

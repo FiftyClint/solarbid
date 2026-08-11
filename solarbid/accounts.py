@@ -163,6 +163,59 @@ def compare_to_existing_estimate(accounts: pd.DataFrame) -> dict[str, float]:
     }
 
 
+# Band around a naively annualized single reading.
+#
+# The unknown is which month was read, not the meter. With ~88% of load in
+# ventilation, a summer reading annualizes high and a winter one low. Two
+# independent checks say the readings here are not extreme: annualizing them
+# gives 53,920 kWh/yr per broiler house, which sits squarely inside the
+# 47,190-54,810 the geometry model predicts from house dimensions. Methods that
+# share no inputs agreeing that closely means the read month is near average.
+#
+# So this band is deliberately much tighter than the 4x geometry spread, while
+# still wide enough to cover a moderately seasonal read. Twelve months of
+# history removes it entirely.
+METERED_BAND_LOW = 0.70
+METERED_BAND_HIGH = 1.35
+
+
+def metered_load_band(annualized_kwh: float):
+    """LoadBand from metered consumption rather than house geometry.
+
+    Far tighter than the geometry estimate, because the meter is a measurement.
+    The remaining uncertainty is seasonal, not dimensional.
+    """
+    from .load import LoadBand
+
+    return LoadBand(
+        low_kwh=annualized_kwh * METERED_BAND_LOW,
+        mid_kwh=annualized_kwh,
+        high_kwh=annualized_kwh * METERED_BAND_HIGH,
+        birds_per_flock=float("nan"),
+        lb_sold_per_year=float("nan"),
+    )
+
+
+# District offices in this footprint and the county each sits in. Used to place
+# the METER, which the mailing city cannot do -- 5 accounts in the first file
+# mail to Georgia and Missouri while the houses are in Arkansas.
+#
+# All three counties are on the energy community list, as is every Arkansas
+# mailing city in the file (Randolph, Clay, Lawrence). A district territory can
+# cross a county line, but every county bordering these is also eligible, so the
+# adder holds regardless.
+DISTRICT_OFFICE_COUNTY = {
+    "POC": "Randolph",   # Pocahontas
+    "REC": "Clay",       # Rector
+    "COR": "Clay",       # Corning
+}
+
+
+def county_for_account(district_office: str) -> str | None:
+    """County of the served meter, from the co-op district office."""
+    return DISTRICT_OFFICE_COUNTY.get(str(district_office).strip().upper())
+
+
 ACCOUNT_CAVEATS = [
     "kWh and demand are a single billing period, not a year. Poultry load is "
     "roughly 88% ventilation and peaks in summer, so annualizing one reading "

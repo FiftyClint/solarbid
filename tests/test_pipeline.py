@@ -811,3 +811,46 @@ class TestAccounts:
         df["demand_kw"] = df["DEMAND in kW"]
         result = compare_to_existing_estimate(df)
         assert 1.5 < result["median_multiple_of_demand"] < 2.0
+
+    def test_metered_quote_does_not_call_the_meter_an_estimate(self):
+        """A grower who knows his own bills would stop reading."""
+        from solarbid.accounts import metered_load_band
+        from solarbid.quote import budgetary_quote
+
+        itc = incentives.itc_rate(
+            system_kw_ac=290, quote_date=TODAY,
+            expected_placed_in_service=TARGET_PIS,
+            domestic_content=True, energy_community=True,
+        )
+        q = budgetary_quote(
+            farm_id="acct", county="Clay", house_count=6, floor_area_ft2=186_000,
+            load=metered_load_band(483_840), roof_capacity_kw=920,
+            ground_capacity_kw=920, itc=itc, quote_date=TODAY,
+            load_source="metered",
+        )
+        assert "taken from your utility account" in q.range_note
+        assert "estimated from house dimensions" not in q.range_note
+        assert "billing history" in q.render()
+
+    def test_geometry_quote_still_says_it_is_an_estimate(self):
+        from solarbid.quote import budgetary_quote
+
+        itc = incentives.itc_rate(
+            system_kw_ac=290, quote_date=TODAY,
+            expected_placed_in_service=TARGET_PIS,
+        )
+        q = budgetary_quote(
+            farm_id="f", county="Randolph", house_count=6,
+            floor_area_ft2=186_000, load=estimate_load(186_000),
+            roof_capacity_kw=920, ground_capacity_kw=920, itc=itc,
+            quote_date=TODAY,
+        )
+        assert "estimated from house dimensions" in q.range_note
+
+    def test_metered_band_is_far_tighter_than_geometry(self):
+        from solarbid.accounts import metered_load_band
+
+        metered = metered_load_band(483_840)
+        geometry = estimate_load(6 * 31_000)
+        assert metered.spread_ratio < 2.0
+        assert geometry.spread_ratio > 4.0
