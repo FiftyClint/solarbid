@@ -20,7 +20,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from brand import (  # noqa: E402
-    BODY, BRAND, DISPLAY, INK, L, MONO, MUTE, PAGE_H, PAGE_W, PANEL, PAPER,
+    ACCENT, BODY, BRAND, DISPLAY, INK, L, MONO, MUTE, PAGE_H, PAGE_W, PANEL, PAPER,
     PHOTO_TEAM, R, callbar, footer, masthead, rule, slot,
 )
 
@@ -175,10 +175,10 @@ def main():
     ax.add_patch(Rectangle((L, 0.120), R - L, 0.072, facecolor=INK,
                            edgecolor="none"))
     ax.text(L + 0.024, 0.168, "NO FEE UNLESS YOU COLLECT.", family=DISPLAY,
-            weight="bold", size=21, color=PAPER, ha="left", va="center")
+            weight="bold", size=21, color=ACCENT, ha="left", va="center")
     ax.text(L + 0.024, 0.140,
             "We are paid out of what we find. If we find nothing, you owe nothing.",
-            family=BODY, size=9.0, color="#B9B0A4", ha="left", va="center")
+            family=BODY, size=9.0, color="#9FBBD4", ha="left", va="center")
 
     if PHOTO_TEAM.exists():
         ax.imshow(imread(str(PHOTO_TEAM)), extent=(R - 0.20, R, 0.120, 0.192),

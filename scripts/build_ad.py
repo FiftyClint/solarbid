@@ -19,7 +19,7 @@ from matplotlib.image import imread  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
 
 from brand import (  # noqa: E402
-    BODY, BRAND, DISPLAY, INK, L, MONO, MUTE, PAGE_H, PAGE_W, PAPER,
+    ACCENT, BODY, BRAND, DISPLAY, INK, L, MONO, MUTE, PAGE_H, PAGE_W, PAPER,
     PHOTO_ROOF, R, callbar, footer, masthead, rule, slot,
 )
 
@@ -111,10 +111,10 @@ def main():
     ax.add_patch(Rectangle((L, 0.116), R - L, 0.030, facecolor=INK,
                            edgecolor="none"))
     ax.text(L + 0.016, 0.131, "THE CREDIT REQUIRES YOUR SYSTEM RUNNING BY 12.31.2027",
-            family=DISPLAY, weight="bold", size=15, color=PAPER,
+            family=DISPLAY, weight="bold", size=15, color=ACCENT,
             ha="left", va="center")
     ax.text(R - 0.016, 0.131, "THAT IS A FEDERAL DATE, NOT OURS",
-            family=MONO, size=6.2, color="#9A9186", ha="right", va="center")
+            family=MONO, size=6.2, color="#9FBBD4", ha="right", va="center")
 
     callbar(ax, "SEND US TWELVE MONTHS OF BILLS.",
             "One call to your co-op. We come back with your real number, at no cost.")

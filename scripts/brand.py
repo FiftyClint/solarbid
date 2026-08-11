@@ -24,14 +24,24 @@ DISPLAY = "Big Shoulders"
 BODY = "Work Sans"
 MONO = "Geist Mono"
 
-# --- swap for real brand colors ------------------------------------------
-BRAND = "#9E2B20"
-BRAND_DK = "#6E1E16"
-PAPER = "#F7F3EA"
-PANEL = "#EDE7DA"
-INK = "#1A1713"
-MUTE = "#6B635A"
-RULE_C = "#CFC6B6"
+# --- CGF brand ------------------------------------------------------------
+# Supplied palette: #155dae deep blue, #3d86ba mid blue, #52fb2a green,
+# #aef75c lime, #fcfdfd white.
+#
+# CONTRAST RULE, do not break it: the greens are accents, never text on white.
+# #52fb2a on white measures about 1.8:1 and #aef75c is worse. They read as
+# highlight against dark ground or as a fill with dark text over them. Blue and
+# navy carry everything that has to be read.
+BRAND = "#155DAE"        # primary, headlines and key figures
+BRAND_DK = "#0F4685"
+BRAND_MID = "#3D86BA"
+ACCENT = "#52FB2A"       # on dark ground only
+ACCENT_SOFT = "#AEF75C"  # fill, with dark text over it
+PAPER = "#FCFDFD"
+PANEL = "#EEF4FA"
+INK = "#10243A"          # navy derived from the brand blue, not a flat black
+MUTE = "#5C7387"
+RULE_C = "#CFDCE8"
 
 # --- swap for real details -----------------------------------------------
 PHONE = "913-349-6586"        # from public listing; confirm before printing
@@ -64,8 +74,18 @@ def rule(ax, y, x0=L, x1=R, c=RULE_C, lw=0.8):
 
 
 def masthead(ax, tagline):
-    """Identity bar shared by every piece."""
+    """Identity bar shared by every piece.
+
+    A blue-to-green stripe runs the full bleed at the top, echoing the logo's
+    own split. It is the only place the green appears against light ground, and
+    it appears as a solid mark rather than as anything anyone has to read.
+    """
     from matplotlib.image import imread
+
+    ax.add_patch(Rectangle((0, 0.988), 0.62, 0.012, facecolor=BRAND,
+                           edgecolor="none", zorder=4))
+    ax.add_patch(Rectangle((0.62, 0.988), 0.38, 0.012, facecolor=ACCENT,
+                           edgecolor="none", zorder=4))
 
     if LOGO_PATH.exists():
         ax.imshow(imread(str(LOGO_PATH)), extent=(L, L + 0.16, 0.938, 0.972),
@@ -90,7 +110,7 @@ def callbar(ax, headline, sub, y=0.028, h=0.072):
     ax.text(L + 0.024, y + h * 0.71, headline, family=DISPLAY, weight="bold",
             size=23, color=PAPER, ha="left", va="center")
     ax.text(L + 0.024, y + h * 0.32, sub, family=BODY, size=9.0,
-            color="#F0D9D5", ha="left", va="center")
+            color="#CFE2F5", ha="left", va="center")
     ax.text(R - 0.024, y + h * 0.50, PHONE, family=DISPLAY, weight="bold",
             size=26, color=PAPER, ha="right", va="center")
 
