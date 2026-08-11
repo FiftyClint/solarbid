@@ -94,7 +94,8 @@ policy.
 | Size | `siting.py` | Roof and ground capacity, then Act 278-aware sizing |
 | Gate | `incentives.py` | Dated ITC rate resolution (base + adders), REAP status |
 | Finance | `finance.py` | Net cost after credit, bonus depreciation and grant |
-| Quote | `quote.py` | Stage-one budgetary estimate, ranged and clearly not a bid |
+| Owners | `owners.py` | Parcel join for owner name, mailing address and county |
+| Quote | `quote.py` | Stage-one budgetary estimate, clearly not a bid |
 
 **Finding houses is the easy part.** Microsoft already published a U-Net trained
 on 1m USDA NAIP imagery *and* the resulting national polygon set, so stage one
@@ -103,6 +104,43 @@ separable on shape: 300–600 ft long, 30–70 ft wide, 8–15:1 aspect.
 
 **A farm, not a house, is the unit of sale.** One owner, one service, one quote.
 Houses within 200 m are clustered into a farm.
+
+## Who owns the farm
+
+A detected roof is not a lead. Owner names and mailing addresses come from the
+**Arkansas GIS Office statewide parcel layer** (`CADAS_PARCEL_POLYGON_CAMP`),
+published free from GeoStor and built from each county assessor's CAMA system.
+It carries owner of record, mailing address and county.
+
+That county field earns its keep twice: it is also what resolves the 10-point
+energy community adder, so one dataset closes both open questions.
+
+```bash
+# once, on a machine with normal internet
+python scripts/clip_parcels.py --source ~/Downloads/CADAS_PARCEL_POLYGON_CAMP.shp
+git add data/peco_aoi_parcels.gpkg && git commit -m "Add Peco AOI parcel extract"
+```
+
+`attach_owners()` joins on the house footprints rather than the farm centroid,
+since a centroid can land in a gap between parcels. Where a farm's houses
+straddle several parcels — common, because houses get built along property
+lines — the parcel carrying the most house area wins and the count of parcels
+touched is reported for manual review.
+
+**There is no public list of poultry operators.** Arkansas's Poultry Feeding
+Operations registry would name them, but Ark. Code Ann. § 15-20-901 et seq.
+makes information about an individual operation confidential; only aggregate
+summaries are public. The deed is the best available proxy, with these gaps:
+
+- Owner of record is often not the grower — land sits in a family trust, an LLC,
+  or a parent's name while an adult child runs the houses. `owner_is_entity`
+  flags the ones needing a contact name before a letter gets opened.
+- Mailing address is the assessor's tax-bill address, which for absentee owners
+  is not the farm.
+- Arkansas assessor parcel boundaries are explicitly *not legal boundaries*.
+
+`mailability_report()` counts how much of a list is actually mailable before
+anyone licks a stamp.
 
 ## Two stages
 
@@ -113,7 +151,7 @@ responds does not deserve an 8760 simulation. `quote.py` produces this.
 
 **Stage two starts when they respond**: twelve months of interval data, a
 structural review for roof, parcel and land cover for ground, site-specific
-irradiance modelling, and a firm bid.
+irradiance modeling, and a firm bid.
 
 This is why production uses a flat 1,450 kWh/kW planning figure. At stage one
 the load band already spans 4×, so a precise irradiance model would be false
@@ -131,11 +169,11 @@ returns a band and `requires_metered_validation()` exists. Geometry alone
 cannot size a system tightly enough to bid. Twelve months of interval data, or a
 University of Arkansas farm energy audit, is the cheapest way to collapse it.
 
-The one favourable structural fact: **~88% of poultry house electricity is
+The one favorable structural fact: **~88% of poultry house electricity is
 ventilation fans**, so load peaks on summer afternoons, coincident with peak
 generation. Solar self-consumption on poultry is unusually good.
 
-**2. Arkansas Act 278 inverts the sizing logic.** Systems energised after
+**2. Arkansas Act 278 inverts the sizing logic.** Systems energized after
 2024-09-30 no longer get 1:1 net metering. On-site consumption avoids retail
 (~12¢); exports are credited at avoided cost (~2.5¢). Sizing to "offset the
 annual bill" — correct under the old rules — produces economics that are wrong
@@ -168,7 +206,7 @@ ownership. Both need verification before a quote goes out.
 Every incentive that moves a poultry solar deal is mid-transition, so
 `incentives.py` takes a date and returns a status with its basis attached.
 Anything unresolvable from public data is reported as **unresolved** rather
-than silently assumed favourable.
+than silently assumed favorable.
 
 **Target: placed in service by 2027-12-31.** OBBBA's begin-construction deadline
 (2026-07-04) has passed, so that date is the surviving path to Sec. 48E — and it
@@ -177,7 +215,7 @@ sets the schedule for everything else.
 - **Base ITC — 30%.** Systems under **1 MW AC** are deemed to satisfy prevailing
   wage and apprenticeship, taking the full 30% *and* full 10-point adders with
   no compliance burden. Farm systems run 50–150 kW, an order of magnitude
-  inside. This is the most favourable structural fact in the model.
+  inside. This is the most favorable structural fact in the model.
 - **Domestic content — +10%.** Adjusted percentage threshold is **50%** for a
   2026 construction start, 55% for 2027. Evidenced via the Notice 2025-08
   elective safe harbor tables.
@@ -227,7 +265,7 @@ self-consumption curve.
 And **the grower's tax rate moves the answer nearly as much as the adders do**.
 Net cost is a property of the buyer, not the project. Many contract growers
 cannot absorb a 50% credit plus full first-year expensing, and a Sec. 6418
-transfer on a single 50 kW system realises ~$48k of a $52.5k credit before
+transfer on a single 50 kW system realizes ~$48k of a $52.5k credit before
 diligence cost — which only works aggregated across farms. Confirm tax capacity
 with the grower's CPA before any of these numbers become a price.
 
@@ -242,12 +280,12 @@ with the grower's CPA before any of these numbers become a price.
   be replaced with an 8760 simulation against real interval data before any
   binding proposal.
 - **No PVWatts, deliberately.** Flat 1,450 kWh/kW is a stage-one planning
-  figure. Site-specific modelling belongs in stage two, after a grower responds.
+  figure. Site-specific modeling belongs in stage two, after a grower responds.
 - **Mount economics are nearly a wash.** $2.00/W roof against $2.10/W ground
   separates a four-house farm by ~$2,300 net and 0.19 years of payback. Roof
   wins on paper, but the margin is thin enough that structural feasibility and
   land availability should decide it, not the spreadsheet.
-- **Co-op tariffs are unmodelled.** Craighead, Clay County, Farmers and Woodruff
+- **Co-op tariffs are unmodeled.** Craighead, Clay County, Farmers and Woodruff
   each set their own rates and demand charges, with no clean API. Hand-entry per
   utility, verified per quote.
 - **Energy community list needs an annual refresh.** Statistical Area status is

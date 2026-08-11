@@ -1,6 +1,6 @@
 """Net project cost after the ITC, bonus depreciation and any grant.
 
-Separated from `incentives` because eligibility and monetisation are different
+Separated from `incentives` because eligibility and monetization are different
 questions. A grower can be fully eligible for a 50% credit and still be unable
 to use it, which is the single most common way a poultry solar proposal falls
 apart after signature.
@@ -33,7 +33,7 @@ TRANSFER_DISCOUNT = 0.92
 
 @dataclass(frozen=True)
 class ProjectFinance:
-    """Gross-to-net cost for one system, with monetisation caveats attached."""
+    """Gross-to-net cost for one system, with monetization caveats attached."""
 
     system_kw: float
     gross_cost: float
@@ -129,7 +129,7 @@ def project_finance(
 
 
 def transfer_value(itc_amount: float, discount: float = TRANSFER_DISCOUNT) -> float:
-    """Cash a Section 6418 credit sale would realise.
+    """Cash a Section 6418 credit sale would realize.
 
     Relevant when the grower lacks tax appetite. Small credits clear below par
     and carry fixed diligence cost, so aggregating several farms into one

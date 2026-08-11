@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Count and characterise poultry farms in the Peco Pocahontas draw area.
+"""Count and characterize poultry farms in the Peco Pocahontas draw area.
 
 This is the decisive cheap step: before building quoting machinery, confirm how
 many real farms sit inside the catchment and what they look like. Peco reports
@@ -37,7 +37,7 @@ REPRESENTATIVE_KW_AC = 50.0
 
 
 def _tristate(value: str) -> bool | None:
-    """yes/no/unknown -- unknown must never resolve to a favourable assumption.
+    """yes/no/unknown -- unknown must never resolve to a favorable assumption.
 
     Validated here rather than via argparse `choices`, because argparse applies
     `type` first and then compares the converted value against `choices` --
@@ -60,7 +60,7 @@ def main() -> int:
         "--placed-in-service",
         type=date.fromisoformat,
         default=date(2027, 12, 1),
-        help="Target energisation date. Must be on or before 2027-12-31 for the ITC.",
+        help="Target energization date. Must be on or before 2027-12-31 for the ITC.",
     )
     ap.add_argument(
         "--domestic-content",

@@ -9,7 +9,7 @@ never responds does not deserve an 8760 simulation.
 
 Stage two starts when they respond: twelve months of interval data, a
 structural review for roof mounts, parcel and land cover for ground, real
-irradiance modelling, and a firm bid.
+irradiance modeling, and a firm bid.
 
 This module produces stage one. Its numbers carry a range rather than a point,
 because the honest uncertainty at this stage is wide and pretending otherwise
@@ -376,12 +376,12 @@ def budgetary_quote(
         "Utility tariff and interconnection terms confirmed for this meter.",
         "Tax capacity confirmed with your CPA -- the credit and first-year "
         "depreciation only help if there is liability to offset.",
-        f"Production modelled at a flat {PLANNING_YIELD_KWH_PER_KW:,.0f} kWh per kW "
-        "planning figure; site-specific modelling comes with the firm proposal.",
+        f"Production modeled at a flat {PLANNING_YIELD_KWH_PER_KW:,.0f} kWh per kW "
+        "planning figure; site-specific modeling comes with the firm proposal.",
     ]
     if itc.eligible:
         caveats.append(
-            "System energised by 2027-12-31. The credit is not available after that."
+            "System energized by 2027-12-31. The credit is not available after that."
         )
 
     return BudgetaryQuote(

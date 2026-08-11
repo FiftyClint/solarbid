@@ -3,7 +3,7 @@
 The incentives that move a poultry solar deal are all mid-transition, so
 nothing here is a constant. Every gate takes a date and returns a status with
 its basis attached, and anything we cannot resolve from public data is reported
-as unresolved rather than silently assumed favourable.
+as unresolved rather than silently assumed favorable.
 
 VERIFIED_AS_OF is the honesty marker. Re-verify against primary sources before
 any quote leaves the building.
@@ -30,7 +30,7 @@ ENERGY_COMMUNITY_ADDER = 0.10
 # Facilities under 1 MW AC are deemed to satisfy prevailing wage and
 # apprenticeship, so they take the full 30% and the full 10-point adders
 # without any PWA compliance burden. Poultry farm systems run 50-150 kW, an
-# order of magnitude inside this. It is the single most favourable structural
+# order of magnitude inside this. It is the single most favorable structural
 # fact in the whole model.
 ONE_MW_AC_THRESHOLD_KW = 1000.0
 
@@ -105,7 +105,7 @@ def energy_community_by_county(county: str, state: str = "AR") -> bool | None:
     """Whether a county qualifies under the Statistical Area category.
 
     Returns None outside Arkansas, where this module carries no list -- an
-    unknown must not resolve to a favourable assumption. Note this covers the
+    unknown must not resolve to a favorable assumption. Note this covers the
     Statistical Area category only; a site in a non-qualifying county may still
     sit in a Coal Closure tract, which is a separate per-tract lookup.
     """
@@ -170,7 +170,7 @@ def _timing_gate(
                 f"{ITC_BEGIN_CONSTRUCTION_DEADLINE} deadline"
             )
         return False, (
-            f"safe-harboured start but placed in service {pis}, after the "
+            f"safe-harbored start but placed in service {pis}, after the "
             f"{ITC_CONTINUITY_DEADLINE} continuity deadline"
         )
 
@@ -179,7 +179,7 @@ def _timing_gate(
         return False, (
             f"begin-construction deadline ({ITC_BEGIN_CONSTRUCTION_DEADLINE}) passed as "
             f"of {quote_date}; supply a placed-in-service date on or before "
-            f"{ITC_PLACED_IN_SERVICE_FALLBACK}, or evidence of a safe-harboured start"
+            f"{ITC_PLACED_IN_SERVICE_FALLBACK}, or evidence of a safe-harbored start"
         )
     if pis <= ITC_PLACED_IN_SERVICE_FALLBACK:
         return True, (

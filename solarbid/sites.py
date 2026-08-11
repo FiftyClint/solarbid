@@ -124,7 +124,7 @@ def screen_barns(
 def cluster_into_farms(
     barns: gpd.GeoDataFrame, distance_m: float = FARM_CLUSTER_DISTANCE_M
 ) -> gpd.GeoDataFrame:
-    """Group neighbouring houses into farms.
+    """Group neighboring houses into farms.
 
     Houses on one farm sit 40-60ft apart; the next farm is typically a quarter
     mile away. Buffering by half the threshold and dissolving turns that

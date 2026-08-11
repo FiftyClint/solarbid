@@ -174,7 +174,7 @@ def recommend_size_kw(
     stop when the marginal kW no longer earns out.
 
     `net_cost_per_watt` drives the answer more than any other input. At gross
-    pricing and a 12c retail rate, unsubsidised simple payback is roughly 13.5
+    pricing and a 12c retail rate, unsubsidized simple payback is roughly 13.5
     years, which clears no reasonable target -- so with no incentives this
     correctly returns zero. Pass the net figure from
     finance.project_finance(...).net_cost_per_watt to size against the real

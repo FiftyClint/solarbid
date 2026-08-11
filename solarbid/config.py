@@ -1,6 +1,6 @@
 """Tunable constants for the Peco/Pocahontas poultry solar pipeline.
 
-Every number here is a modelling assumption, not a measurement. They are
+Every number here is a modeling assumption, not a measurement. They are
 collected in one module so a quote can be re-run against different assumptions
 and so that anything we tighten with real audit data has exactly one home.
 """
@@ -22,7 +22,7 @@ PECO_POCAHONTAS = (36.2615, -90.9712)  # (lat, lon) WGS84
 AOI_RADIUS_MILES = 50.0
 
 # Projected CRS for anything involving length or area. EPSG:26915 is UTM 15N
-# (NAD83), which covers northeast Arkansas with sub-metre distortion.
+# (NAD83), which covers northeast Arkansas with sub-meter distortion.
 WORKING_CRS = "EPSG:26915"
 
 
@@ -71,7 +71,7 @@ class DetectionFilter:
 # Farm clustering
 # --------------------------------------------------------------------------
 # Barns closer than this belong to one farm: one owner, one service, one quote.
-# Poultry houses sit 40-60ft apart within a farm; neighbouring farms are
+# Poultry houses sit 40-60ft apart within a farm; neighboring farms are
 # typically a quarter mile or more away.
 FARM_CLUSTER_DISTANCE_M = 200.0
 
@@ -141,7 +141,7 @@ class SitingModel:
 class ArkansasTariff:
     """Post-Act-278 economics.
 
-    Systems energised after 2024-09-30 no longer receive 1:1 net metering.
+    Systems energized after 2024-09-30 no longer receive 1:1 net metering.
     On-site consumption avoids the retail rate; exports are credited at avoided
     cost. The gap between the two is roughly 5x, which means these systems must
     be sized to self-consumption rather than to annual bill offset. Sizing to

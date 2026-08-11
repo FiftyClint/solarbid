@@ -9,6 +9,7 @@ from __future__ import annotations
 from datetime import date
 
 import geopandas as gpd
+import pandas as pd
 import pytest
 from shapely.geometry import box
 
@@ -30,7 +31,7 @@ HOUSE_WID_M = 54 * FT    # 16.5 m -- modern commercial width; the screen
 
 ORIGIN_E, ORIGIN_N = 320_000.0, 4_015_000.0   # Randolph County, UTM 15N
 
-TARGET_PIS = date(2027, 12, 1)   # the end-of-2027 energisation target
+TARGET_PIS = date(2027, 12, 1)   # the end-of-2027 energization target
 TODAY = date(2026, 8, 11)
 
 
@@ -122,7 +123,7 @@ class TestLoad:
 class TestITC:
     """Section 48E, targeting an end-of-2027 placed-in-service date."""
 
-    def test_end_of_2027_energisation_qualifies(self):
+    def test_end_of_2027_energization_qualifies(self):
         result = incentives.itc_rate(
             system_kw_ac=50, quote_date=TODAY, expected_placed_in_service=TARGET_PIS
         )
@@ -139,7 +140,7 @@ class TestITC:
         assert result.total_rate == 0.0
 
     def test_farm_scale_systems_are_exempt_from_prevailing_wage(self):
-        """The most favourable structural fact in the model."""
+        """The most favorable structural fact in the model."""
         result = incentives.itc_rate(
             system_kw_ac=85, quote_date=TODAY, expected_placed_in_service=TARGET_PIS
         )
@@ -163,7 +164,7 @@ class TestITC:
         assert result.total_rate == pytest.approx(0.50)
         assert result.is_fully_resolved
 
-    def test_unknown_adders_are_never_assumed_favourable(self):
+    def test_unknown_adders_are_never_assumed_favorable(self):
         """Undetermined must not quietly inflate the credit."""
         result = incentives.itc_rate(
             system_kw_ac=50, quote_date=TODAY, expected_placed_in_service=TARGET_PIS
@@ -258,7 +259,7 @@ class TestFinance:
         assert low.net_cost > high.net_cost
         assert any("tax capacity" in c for c in low.caveats)
 
-    def test_every_financed_quote_carries_monetisation_caveats(self):
+    def test_every_financed_quote_carries_monetization_caveats(self):
         fin = project_finance(50, 2.10, itc_rate=0.50, tax_rate=0.30)
         assert fin.caveats
         assert any("passive activity" in c.lower() for c in fin.caveats)
@@ -290,7 +291,7 @@ class TestSiting:
         assert blended_value_per_kwh(0.2, tariff) > blended_value_per_kwh(2.0, tariff)
 
     def test_nothing_pencils_at_gross_cost(self, four_house_farm):
-        """At $2.10/W and 12c retail, unsubsidised payback is ~13.5 years."""
+        """At $2.10/W and 12c retail, unsubsidized payback is ~13.5 years."""
         load = estimate_load(four_house_farm)
         roof_kw = roof_capacity_kw(four_house_farm)
         assert recommend_size_kw(load.mid_kwh, roof_kw) == 0.0
@@ -617,3 +618,104 @@ class TestQuoteHtml:
 
     def test_html_is_marked_as_not_a_bid(self):
         assert "not a bid" in self._quote().render_html().lower()
+
+
+class TestOwners:
+    """Turning a detected roof into a lead you can actually mail."""
+
+    def _parcels(self):
+        from solarbid.owners import attach_owners  # noqa: F401
+
+        # Two parcels: one under the 4-house farm, one under the 2-house farm.
+        return gpd.GeoDataFrame(
+            {
+                "PARCEL_ID": ["001-0001", "001-0002"],
+                "OWNER_NAME": ["SMITH, JAMES R", "PECO GROWERS LLC"],
+                "MAIL_ADDRESS": ["1420 CR 314", "PO BOX 88"],
+                "MAIL_CITY": ["Pocahontas", "Walnut Ridge"],
+                "MAIL_STATE": ["AR", "AR"],
+                "MAIL_ZIP": ["72455", "72476"],
+                "COUNTY_NAME": ["Randolph", "Lawrence"],
+            },
+            geometry=[
+                box(ORIGIN_E - 200, ORIGIN_N - 200, ORIGIN_E + 500, ORIGIN_N + 500),
+                box(ORIGIN_E + 1800, ORIGIN_N - 200, ORIGIN_E + 2500, ORIGIN_N + 500),
+            ],
+            crs=WORKING_CRS,
+        )
+
+    def _farms(self, synthetic_barns):
+        return sites.cluster_into_farms(sites.screen_barns(synthetic_barns))
+
+    def test_owner_and_mailing_address_resolve(self, synthetic_barns):
+        from solarbid.owners import attach_owners
+
+        owners = attach_owners(self._farms(synthetic_barns), self._parcels())
+        assert len(owners) == 2
+        assert set(owners["owner"]) == {"SMITH, JAMES R", "PECO GROWERS LLC"}
+        assert "1420 CR 314" in set(owners["mail_address"])
+
+    def test_county_comes_along_for_the_energy_community_adder(self, synthetic_barns):
+        """One dataset closes both the owner and the county question."""
+        from solarbid.owners import attach_owners
+
+        owners = attach_owners(self._farms(synthetic_barns), self._parcels())
+        counties = set(owners["county"])
+        assert counties == {"Randolph", "Lawrence"}
+        for county in counties:
+            assert incentives.energy_community_by_county(county) is True
+
+    def test_entity_owners_are_flagged_for_a_contact_name(self, synthetic_barns):
+        from solarbid.owners import attach_owners
+
+        owners = attach_owners(self._farms(synthetic_barns), self._parcels())
+        flagged = owners.set_index("owner")["owner_is_entity"]
+        assert flagged["PECO GROWERS LLC"]
+        assert not flagged["SMITH, JAMES R"]
+
+    def test_entity_detection_covers_trusts_and_estates(self):
+        from solarbid.owners import is_entity
+
+        for name in ("JONES FAMILY TRUST", "ESTATE OF R HALL", "BAKER FARMS INC"):
+            assert is_entity(name), name
+        for name in ("SMITH, JAMES R", "MARY ANNE WILSON", ""):
+            assert not is_entity(name), name
+
+    def test_farms_off_the_parcel_layer_are_flagged_not_dropped(self):
+        from solarbid.owners import attach_owners
+
+        orphan = gpd.GeoDataFrame(
+            {"farm_id": ["farm_09999"]},
+            geometry=[box(900_000, 4_500_000, 900_100, 4_500_100)],
+            crs=WORKING_CRS,
+        )
+        owners = attach_owners(orphan, self._parcels())
+        assert len(owners) == 1
+        assert owners.iloc[0]["needs_manual_lookup"]
+
+    def test_missing_owner_column_fails_loudly(self, synthetic_barns):
+        from solarbid.owners import attach_owners
+
+        bad = self._parcels().drop(columns=["OWNER_NAME"])
+        with pytest.raises(ValueError, match="No owner column"):
+            attach_owners(self._farms(synthetic_barns), bad)
+
+    def test_column_detection_is_case_insensitive(self):
+        from solarbid.owners import detect_columns
+
+        cols = detect_columns(
+            pd.DataFrame(columns=["owner_name", "mail_address", "county_name"])
+        )
+        assert cols.owner == "owner_name"
+        assert cols.county == "county_name"
+
+    def test_mailability_report_counts_what_matters(self, synthetic_barns):
+        from solarbid.owners import attach_owners, mailability_report
+
+        report = mailability_report(
+            attach_owners(self._farms(synthetic_barns), self._parcels())
+        )
+        assert report["total"] == 2
+        assert report["with_owner"] == 2
+        assert report["with_mailing_address"] == 2
+        assert report["entity_owned"] == 1
