@@ -149,3 +149,70 @@ def callbar(ax, headline, sub, y=0.028, h=0.072):
 def footer(ax, y=0.014):
     ax.text(L, y, f"{ADDRESS}   ·   {WEB}", family=MONO, size=6.2,
             color=MUTE, ha="left", va="center")
+
+
+# --------------------------------------------------------------------------
+# Text flow
+# --------------------------------------------------------------------------
+# Hand-placing paragraphs at fixed y coordinates is why copy edits kept causing
+# collisions: change a sentence and the block silently grows into whatever sits
+# below it. These measure the real rendered width and flow downward from a
+# cursor, so the layout survives copy changes instead of needing a re-tune.
+
+def measure(fig, text, family, size, weight="normal"):
+    """Rendered width and height of a string, in figure fractions."""
+    renderer = fig.canvas.get_renderer()
+    artist = fig.text(0, 0, text, family=family, size=size, weight=weight)
+    bb = artist.get_window_extent(renderer=renderer)
+    artist.remove()
+    return bb.width / (fig.dpi * PAGE_W), bb.height / (fig.dpi * PAGE_H)
+
+
+def wrap(fig, text, max_w, family, size, weight="normal"):
+    """Greedy wrap to a measured width. Honors explicit newlines."""
+    lines = []
+    for para_text in text.split("\n"):
+        words = para_text.split()
+        if not words:
+            lines.append("")
+            continue
+        current = words[0]
+        for word in words[1:]:
+            trial = f"{current} {word}"
+            if measure(fig, trial, family, size, weight)[0] <= max_w:
+                current = trial
+            else:
+                lines.append(current)
+                current = word
+        lines.append(current)
+    return lines
+
+
+class Flow:
+    """A downward cursor. Every block returns the y it ended at."""
+
+    def __init__(self, fig, ax, y, x0=L, x1=R):
+        self.fig, self.ax, self.y, self.x0, self.x1 = fig, ax, y, x0, x1
+
+    @property
+    def width(self):
+        return self.x1 - self.x0
+
+    def gap(self, amount):
+        self.y -= amount
+        return self.y
+
+    def text(self, content, family, size, color=INK, weight="normal",
+             leading=1.55, indent=0.0, gap_after=0.0, max_w=None):
+        x = self.x0 + indent
+        width = max_w if max_w is not None else (self.x1 - x)
+        lines = wrap(self.fig, content, width, family, size, weight)
+        line_h = measure(self.fig, "Hg", family, size, weight)[1] * leading
+        for line in lines:
+            self.y -= line_h
+            if line:
+                self.ax.text(x, self.y, line, family=family, size=size,
+                             color=color, weight=weight, ha="left",
+                             va="baseline")
+        self.y -= gap_after
+        return self.y
