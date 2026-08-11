@@ -31,11 +31,35 @@ and never again. On any machine with normal internet:
 
 ```bash
 git clone https://github.com/FiftyClint/solarbid.git && cd solarbid
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 python scripts/clip_to_aoi.py          # downloads, clips to the Peco AOI
 git add data/peco_aoi_barns.gpkg
 git commit -m "Add Peco AOI barn extract" && git push
 ```
+
+<details>
+<summary>Windows PowerShell</summary>
+
+Windows PowerShell 5.1 does not accept `&&` as a statement separator, and `pip`
+is often not on PATH even when Python is. Run one line at a time:
+
+```powershell
+cd $HOME
+git clone https://github.com/FiftyClint/solarbid.git
+cd solarbid
+git checkout claude/chicken-house-solar-tool-k8eu3s
+python -m pip install -r requirements.txt
+python scripts\clip_to_aoi.py
+git add data/peco_aoi_barns.gpkg
+git commit -m "Add Peco AOI barn extract"
+git push
+```
+
+If the dependency install fails to build wheels, the Python version is likely
+newer than the geospatial stack supports. Install Python 3.12 and use
+`py -3.12 -m pip install -r requirements.txt`, then `py -3.12 scripts\clip_to_aoi.py`.
+
+</details>
 
 `resolve_barn_source()` prefers that extract whenever it exists, so every later
 run — anywhere, including restricted environments — needs no network at all.
