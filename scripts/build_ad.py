@@ -24,12 +24,17 @@ from brand import (  # noqa: E402
     rule, slot,
 )
 
-# Metered medians across 115 broiler accounts, priced at $2.00/W roof,
-# 50% ITC and 100% bonus depreciation at a 30% marginal rate.
+# Metered medians across 115 broiler accounts, priced at $2.10/W GROUND, with
+# the 50% credit and 100% bonus depreciation at a 30% marginal rate.
+#
+# Ground, not roof, because the photographs above are ground mounts. Pricing a
+# roof table under ground-mount pictures is the kind of mismatch a grower
+# notices. Roof comes in about 5% cheaper and lands at 3.9 years, which is why
+# the headline says about four rather than under four.
 TABLE = [
-    ("2 houses", "125,760", "75 kW", "$150,000", "$10,500", "3.9 yrs"),
-    ("4 houses", "194,880", "115 kW", "$230,000", "$16,200", "3.9 yrs"),
-    ("6 houses", "343,680", "205 kW", "$410,000", "$28,700", "3.9 yrs"),
+    ("2 houses", "125,760", "75 kW", "$157,500", "$10,500", "4.1 yrs"),
+    ("4 houses", "194,880", "115 kW", "$241,500", "$16,200", "4.1 yrs"),
+    ("6 houses", "343,680", "205 kW", "$430,500", "$28,700", "4.1 yrs"),
 ]
 
 
@@ -48,7 +53,7 @@ def main():
             size=42, color=INK, ha="left", va="center")
     ax.text(L, 0.810, "$16,000 A YEAR.", family=DISPLAY, weight="bold",
             size=58, color=BRAND, ha="left", va="center")
-    ax.text(L, 0.746, "PAID BACK IN UNDER FOUR YEARS.", family=DISPLAY,
+    ax.text(L, 0.746, "PAID BACK IN ABOUT FOUR YEARS.", family=DISPLAY,
             weight="bold", size=31, color=INK, ha="left", va="center")
 
     ax.text(L, 0.712,
@@ -84,7 +89,9 @@ def main():
         y -= 0.040
         rule(ax, y + 0.018)
 
-    ax.text(L, 0.294, "Roof mount at $2.00 a watt. Ground mount quoted alongside.",
+    ax.text(L, 0.294,
+            "Ground mount at $2.10 a watt, as pictured. Roof runs about 5% less "
+            "where the trusses allow, and is quoted alongside.",
             family=BODY, size=8.0, color=MUTE, ha="left", va="center")
 
     # ----------------------------------------------------------------- proof

@@ -24,6 +24,9 @@ DISPLAY = "Big Shoulders"
 BODY = "Work Sans"
 MONO = "Geist Mono"
 
+PAGE_W, PAGE_H = 8.5, 11.0
+L, R = 0.075, 0.925
+
 # --- CGF brand ------------------------------------------------------------
 # Supplied palette: #155dae deep blue, #3d86ba mid blue, #52fb2a green,
 # #aef75c lime, #fcfdfd white.
@@ -59,8 +62,6 @@ PHOTO_TEAM = ASSETS / "cgf_team.jpg"
 PHOTO_GROUND = [ASSETS / "ground_mount_1.jpg", ASSETS / "ground_mount_2.jpg"]
 
 
-PAGE_W, PAGE_H = 8.5, 11.0
-L, R = 0.075, 0.925
 
 
 def slot(ax, x0, y0, x1, y1, label, sub=""):
@@ -112,7 +113,13 @@ def masthead(ax, tagline):
                            edgecolor="none", zorder=4))
 
     if LOGO_PATH.exists():
-        ax.imshow(imread(str(LOGO_PATH)), extent=(L, L + 0.16, 0.938, 0.972),
+        # Width follows the logo's own aspect. A fixed box would stretch it,
+        # and a stretched logo is the fastest way to look amateur.
+        img = imread(str(LOGO_PATH))
+        aspect = img.shape[1] / img.shape[0]
+        height = 0.046
+        width = height * aspect * (PAGE_H / PAGE_W)
+        ax.imshow(img, extent=(L, L + width, 0.929, 0.929 + height),
                   aspect="auto", zorder=3)
     else:
         slot(ax, L, 0.936, L + 0.16, 0.974, "CGF LOGO")
