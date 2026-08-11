@@ -79,7 +79,7 @@ SECTIONS = [
 
 
 def section_head(flow, number, title):
-    flow.gap(0.017)
+    flow.gap(0.032)
     y = flow.y
     flow.ax.text(L, y, number, family=MONO, size=7.0, color=BRAND,
                  ha="left", va="baseline")
@@ -88,7 +88,7 @@ def section_head(flow, number, title):
     flow.gap(0.009)
     flow.ax.plot([L, R], [flow.y, flow.y], color=RULE_C, lw=0.7,
                  solid_capstyle="butt")
-    flow.gap(0.008)
+    flow.gap(0.001)
 
 
 def new_page(continuation=False):

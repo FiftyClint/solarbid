@@ -18,6 +18,11 @@ ASSETS = Path("assets")
 # page: about 3.56in wide by 2.04in tall.
 BAND_ASPECT = 1.75
 
+# The one-page sheet has less room, so a pair at 1.75 would run into the
+# footer. A wider crop keeps them full width and short enough to fit. Cropping
+# is the right answer here rather than scaling, which would distort them.
+WIDE_ASPECT = 3.2
+
 # Source files as dropped in, with the vertical bias for the crop. Farm photos
 # carry a lot of sky that does nothing, so both bias downward toward the array.
 SOURCES = [
@@ -61,10 +66,12 @@ def main() -> int:
             print(f"skip {src_name}, not present")
             continue
         im = Image.open(src).convert("RGB")
-        out = crop_to_aspect(im, BAND_ASPECT, bias)
-        out.save(ASSETS / out_name, quality=92)
-        print(f"{src_name} {im.size} -> {out_name} {out.size} "
-              f"(aspect {out.size[0]/out.size[1]:.2f})")
+        for aspect, suffix in ((BAND_ASPECT, ""), (WIDE_ASPECT, "_wide")):
+            out = crop_to_aspect(im, aspect, bias)
+            name = out_name.replace(".jpg", f"{suffix}.jpg")
+            out.save(ASSETS / name, quality=92)
+            print(f"{src_name} {im.size} -> {name} {out.size} "
+                  f"(aspect {out.size[0]/out.size[1]:.2f})")
 
     for name in LOGO_SOURCES:
         src = ASSETS / name

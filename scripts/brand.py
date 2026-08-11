@@ -48,7 +48,7 @@ RULE_C = "#CFDCE8"
 
 # --- swap for real details -----------------------------------------------
 PHONE = "913-349-6586"        # from public listing; confirm before printing
-ADDRESS = "1800 Main St, Parsons, KS 67357"
+ADDRESS = "8595 College Blvd, Suite 150L, Overland Park, KS 66210"
 WEB = "cleanergreenerfuture.com"
 
 ASSETS = Path("assets")
@@ -60,6 +60,8 @@ PHOTO_TEAM = ASSETS / "cgf_team.jpg"
 # solar flyer, which is stronger than one wide crop: two jobs reads as a track
 # record, one reads as a stock photo.
 PHOTO_GROUND = [ASSETS / "ground_mount_1.jpg", ASSETS / "ground_mount_2.jpg"]
+PHOTO_GROUND_WIDE = [ASSETS / "ground_mount_1_wide.jpg",
+                     ASSETS / "ground_mount_2_wide.jpg"]
 
 
 
