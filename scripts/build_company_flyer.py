@@ -46,11 +46,42 @@ METHOD = [
      "Specification and the\npaperwork that actually\ncollects it."),
 ]
 
-EQUIPMENT = ("Efficiency upgrades  ·  HVAC  ·  Refrigeration  ·  Lighting  ·  "
-             "Controls  ·  Solar  ·  Storage")
+# The hook has to name equipment the reader is actually going to buy, or it is
+# an assumption dressed as a fact. For a contract grower that is not solar. It
+# is the integrator-specified kit on a replacement cycle: exhaust fans and
+# structural components run 10-15 years, controls turn over faster.
+VERTICALS = {
+    "poultry": {
+        "hook": ("FANS. COOL CELLS.", "CONTROLLERS.",
+                 "YOU REPLACE THEM ANYWAY."),
+        "intro": ("Your integrator tells you what to upgrade. Nobody tells you "
+                  "what the upgrade qualifies for.\nCGF works the energy and "
+                  "incentive side of the project you were going to do "
+                  "regardless."),
+        "equipment": ("Tunnel fans  ·  Cool cells  ·  Controllers  ·  Lighting  "
+                      "·  Brooders  ·  Insulation  ·  Generators  ·  Solar  ·  "
+                      "Storage"),
+    },
+    "general": {
+        "hook": ("YOU ARE GOING TO BUY", "THE EQUIPMENT ANYWAY.",
+                 "WE FIND OUT WHO ELSE PAYS."),
+        "intro": ("CGF is not an equipment company. We work the energy and "
+                  "incentive side of a project:\nwhat you use, what you qualify "
+                  "for, and what it takes to actually collect it."),
+        "equipment": ("Efficiency upgrades  ·  HVAC  ·  Refrigeration  ·  "
+                      "Lighting  ·  Controls  ·  Solar  ·  Storage"),
+    },
+}
 
 
 def main():
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--vertical", choices=sorted(VERTICALS), default="poultry")
+    args = ap.parse_args()
+    v = VERTICALS[args.vertical]
+
     fig = plt.figure(figsize=(PAGE_W, PAGE_H), dpi=300)
     fig.patch.set_facecolor(PAPER)
     ax = fig.add_axes([0, 0, 1, 1])
@@ -61,20 +92,15 @@ def main():
     masthead(ax, "ENERGY AND INCENTIVE SPECIALISTS")
 
     # ------------------------------------------------------------------ hook
-    ax.text(L, 0.882, "YOU ARE GOING TO BUY", family=DISPLAY, weight="bold",
+    ax.text(L, 0.882, v["hook"][0], family=DISPLAY, weight="bold",
             size=40, color=INK, ha="left", va="center")
-    ax.text(L, 0.828, "THE EQUIPMENT ANYWAY.", family=DISPLAY, weight="bold",
+    ax.text(L, 0.828, v["hook"][1], family=DISPLAY, weight="bold",
             size=40, color=INK, ha="left", va="center")
-    ax.text(L, 0.762, "WE FIND OUT WHO ELSE PAYS FOR IT.",
-            family=DISPLAY, weight="bold", size=36, color=BRAND,
-            ha="left", va="center")
+    ax.text(L, 0.762, v["hook"][2], family=DISPLAY, weight="bold", size=36,
+            color=BRAND, ha="left", va="center")
 
-    ax.text(L, 0.726,
-            "CGF is not an equipment company. We work the energy and incentive "
-            "side of a project:\nwhat you use, what you qualify for, and what it "
-            "takes to actually collect it.",
-            family=BODY, size=9.6, color=MUTE, ha="left", va="top",
-            linespacing=1.6)
+    ax.text(L, 0.722, v["intro"], family=BODY, size=9.6, color=MUTE,
+            ha="left", va="top", linespacing=1.6)
 
     # ---------------------------------------------------------- the method
     ax.text(L, 0.660, "HOW WE WORK, IN THIS ORDER", family=DISPLAY,
@@ -121,9 +147,9 @@ def main():
             color=MUTE, ha="right", va="center")
 
     # ---------------------------------------------------------- what it fits
-    ax.text(L, 0.282, "ON WHAT KIND OF PROJECT", family=MONO, size=6.2,
+    ax.text(L, 0.282, "ON WHAT KIND OF WORK", family=MONO, size=6.2,
             color=MUTE, ha="left", va="center")
-    ax.text(L, 0.258, EQUIPMENT, family=BODY, size=10.0, color=INK,
+    ax.text(L, 0.258, v["equipment"], family=BODY, size=9.4, color=INK,
             ha="left", va="center")
 
     # ------------------------------------------------------------ the terms
@@ -144,7 +170,8 @@ def main():
             "Tell us what you are planning. We come back with what it qualifies for.")
     footer(ax)
 
-    out_pdf, out_png = Path("out/cgf_company.pdf"), Path("out/cgf_company.png")
+    stem = "cgf_company" if args.vertical == "poultry" else f"cgf_company_{args.vertical}"
+    out_pdf, out_png = Path(f"out/{stem}.pdf"), Path(f"out/{stem}.png")
     fig.savefig(out_pdf, facecolor=PAPER, dpi=300)
     fig.savefig(out_png, facecolor=PAPER, dpi=200)
     plt.close(fig)
