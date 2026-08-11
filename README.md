@@ -14,7 +14,7 @@ polygon dataset has **not** been ingested yet — see [Blocked](#blocked).
 
 ```bash
 pip install -r requirements.txt
-python -m pytest tests/          # 40 passing, synthetic geometry
+python -m pytest tests/          # 49 passing, synthetic geometry
 python scripts/run_spike.py      # needs the dataset (see below)
 ```
 
@@ -42,6 +42,7 @@ out-of-band and drop it in `./data/`. Everything downstream then runs.
 | Size | `siting.py` | Roof and ground capacity, then Act 278-aware sizing |
 | Gate | `incentives.py` | Dated ITC rate resolution (base + adders), REAP status |
 | Finance | `finance.py` | Net cost after credit, bonus depreciation and grant |
+| Quote | `quote.py` | Stage-one budgetary estimate, ranged and clearly not a bid |
 
 **Finding houses is the easy part.** Microsoft already published a U-Net trained
 on 1m USDA NAIP imagery *and* the resulting national polygon set, so stage one
@@ -50,6 +51,23 @@ separable on shape: 300–600 ft long, 30–70 ft wide, 8–15:1 aspect.
 
 **A farm, not a house, is the unit of sale.** One owner, one service, one quote.
 Houses within 200 m are clustered into a farm.
+
+## Two stages
+
+**Stage one is screening.** Everything derives from aerial imagery and public
+data, costs nothing per farm, and exists to get a grower to raise their hand.
+Precision is not the goal and chasing it is wasted money — a farm that never
+responds does not deserve an 8760 simulation. `quote.py` produces this.
+
+**Stage two starts when they respond**: twelve months of interval data, a
+structural review for roof, parcel and land cover for ground, site-specific
+irradiance modelling, and a firm bid.
+
+This is why production uses a flat 1,450 kWh/kW planning figure. At stage one
+the load band already spans 4×, so a precise irradiance model would be false
+precision bolted onto a rough number. Stage-one system size is quoted as a
+**range driven by the load band** — 85 to 355 kW on a representative four-house
+farm — because that is where the real uncertainty lives.
 
 ## Three things that decide whether a quote is any good
 
@@ -168,11 +186,12 @@ with the grower's CPA before any of these numbers become a price.
   `_SELF_CONSUMPTION_CURVE` are engineering judgement, not measurement, and must
   be replaced with an 8760 simulation against real interval data before any
   binding proposal.
-- **No PVWatts yet.** Specific yield is a flat 1,450 kWh/kW. NREL PVWatts v8 keyed
-  off each farm's centroid and ridge azimuth is the next integration.
-- **Pricing is a single blended number.** $2.10/W for roof and ground alike.
-  Mounting type changes the engineering and site work, so this will need to
-  split once real bids come in.
+- **No PVWatts, deliberately.** Flat 1,450 kWh/kW is a stage-one planning
+  figure. Site-specific modelling belongs in stage two, after a grower responds.
+- **Pricing is a single blended number.** $2.10/W for roof and ground alike, so
+  the two mount options currently produce identical economics and differ only in
+  their blockers. Splitting the price is what would let a quote help a grower
+  actually choose between them.
 - **Co-op tariffs are unmodelled.** Craighead, Clay County, Farmers and Woodruff
   each set their own rates and demand charges, with no clean API. Hand-entry per
   utility, verified per quote.

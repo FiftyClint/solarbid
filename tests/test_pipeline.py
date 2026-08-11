@@ -351,3 +351,76 @@ class TestSiting:
         siting = SitingModel()
         assert siting.roof_requires_structural_review
         assert siting.ground_watts_per_ft2 < siting.roof_watts_per_ft2
+
+
+class TestBudgetaryQuote:
+    """Stage-one output: cheap, ranged, and clearly not a bid."""
+
+    def _quote(self, tax_rate=0.30, **kw):
+        from solarbid.quote import budgetary_quote
+        from solarbid.siting import roof_capacity_kw as roof_cap
+
+        floor = 4 * 500 * 43
+        itc = incentives.itc_rate(
+            system_kw_ac=150,
+            quote_date=TODAY,
+            expected_placed_in_service=TARGET_PIS,
+            domestic_content=True,
+            energy_community=incentives.energy_community_by_county("Randolph"),
+        )
+        return budgetary_quote(
+            farm_id="farm_00001",
+            county="Randolph",
+            house_count=4,
+            floor_area_ft2=floor,
+            load=estimate_load(floor),
+            roof_capacity_kw=roof_cap(floor),
+            ground_capacity_kw=300.0,
+            itc=itc,
+            tax_rate=tax_rate,
+            quote_date=TODAY,
+            **kw,
+        )
+
+    def test_randolph_farm_quotes_the_full_fifty_percent(self):
+        q = self._quote()
+        assert q.itc.total_rate == pytest.approx(0.50)
+        assert q.itc.is_fully_resolved
+
+    def test_system_size_is_a_range_driven_by_the_load_band(self):
+        """Load uncertainty, not irradiance, is what makes this a range."""
+        q = self._quote()
+        assert q.system_kw_low < q.system_kw_mid < q.system_kw_high
+
+    def test_both_mount_options_are_priced(self):
+        q = self._quote()
+        assert q.roof.recommended_kw > 0
+        assert q.ground.recommended_kw > 0
+
+    def test_each_mount_carries_its_own_verification_blocker(self):
+        q = self._quote()
+        assert any("structural review" in b for b in q.roof.blockers)
+        assert any("ownership" in b for b in q.ground.blockers)
+
+    def test_preferred_option_is_the_faster_payback(self):
+        q = self._quote()
+        assert q.preferred.payback_years == min(
+            q.roof.payback_years, q.ground.payback_years
+        )
+
+    def test_rendered_quote_says_it_is_not_a_bid(self):
+        text = self._quote().render()
+        assert "not a bid" in text.lower()
+        assert "BEFORE THIS BECOMES A BID" in text
+
+    def test_rendered_quote_surfaces_the_2027_deadline(self):
+        assert "2027-12-31" in self._quote().render()
+
+    def test_rendered_quote_asks_for_the_utility_bills(self):
+        """The cheapest way to collapse the load band is to ask."""
+        assert "utility bills" in self._quote().render().lower()
+
+    def test_no_tax_appetite_still_produces_a_usable_quote(self):
+        q = self._quote(tax_rate=0.0)
+        assert q.preferred.viable
+        assert q.preferred.payback_years > self._quote().preferred.payback_years
