@@ -52,22 +52,32 @@ METHOD = [
 # structural components run 10-15 years, controls turn over faster.
 VERTICALS = {
     "poultry": {
-        "hook": ("FANS. COOL CELLS.", "CONTROLLERS.",
-                 "YOU REPLACE THEM ANYWAY."),
-        "intro": ("Your integrator tells you what to upgrade. Nobody tells you "
-                  "what the upgrade qualifies for.\nCGF works the energy and "
-                  "incentive side of the project you were going to do "
-                  "regardless."),
+        "hook": ("YOUR POWER BILL WENT UP", "6.5% LAST YEAR."),
+        "offer": "WE READ THE BILL AND FIND WHERE TO STOP IT.",
+        "offer_sub": ("No charge for the look. Arkansas rates rose 6.5% in 2025 "
+                      "and the next increase is already filed."),
+        "agitate_head": "AND THE PART THAT IS RISING IS NOT THE PART YOU WATCH",
+        "agitate": ("Arkansas co-ops are adding demand charges to general "
+                    "service. One just put $1 to $2 per kW on the bill, charged "
+                    "on your highest\nfew hours rather than your usage. Broiler "
+                    "farms here run a load factor near 0.35. You pay for a July "
+                    "afternoon all year."),
+        "cost_rows": [("Two houses", 38), ("Four houses", 74), ("Six houses", 115)],
         "equipment": ("Tunnel fans  ·  Cool cells  ·  Controllers  ·  Lighting  "
                       "·  Brooders  ·  Insulation  ·  Generators  ·  Solar  ·  "
                       "Storage"),
     },
     "general": {
-        "hook": ("YOU ARE GOING TO BUY", "THE EQUIPMENT ANYWAY.",
-                 "WE FIND OUT WHO ELSE PAYS."),
-        "intro": ("CGF is not an equipment company. We work the energy and "
-                  "incentive side of a project:\nwhat you use, what you qualify "
-                  "for, and what it takes to actually collect it."),
+        "hook": ("YOUR POWER BILL WENT UP", "6.5% LAST YEAR."),
+        "offer": "WE READ THE BILL AND FIND WHERE TO STOP IT.",
+        "offer_sub": ("No charge for the look. Arkansas rates rose 6.5% in 2025 "
+                      "and the next increase is already filed."),
+        "agitate_head": "AND THE PART THAT IS RISING IS NOT THE PART YOU WATCH",
+        "agitate": ("Arkansas co-ops are adding demand charges to general "
+                    "service. One just put $1 to $2 per kW on the bill, charged "
+                    "on your highest\nfew hours rather than your usage. The lower "
+                    "your load factor, the more of the bill is not power at all."),
+        "cost_rows": [("50 kW peak", 50), ("100 kW peak", 100), ("200 kW peak", 200)],
         "equipment": ("Efficiency upgrades  ·  HVAC  ·  Refrigeration  ·  "
                       "Lighting  ·  Controls  ·  Solar  ·  Storage"),
     },
@@ -92,82 +102,91 @@ def main():
     masthead(ax, "ENERGY AND INCENTIVE SPECIALISTS")
 
     # ------------------------------------------------------------------ hook
-    ax.text(L, 0.882, v["hook"][0], family=DISPLAY, weight="bold",
-            size=40, color=INK, ha="left", va="center")
-    ax.text(L, 0.828, v["hook"][1], family=DISPLAY, weight="bold",
-            size=40, color=INK, ha="left", va="center")
-    ax.text(L, 0.762, v["hook"][2], family=DISPLAY, weight="bold", size=36,
-            color=BRAND, ha="left", va="center")
+    ax.text(L, 0.876, v["hook"][0], family=DISPLAY, weight="bold", size=38,
+            color=INK, ha="left", va="center")
+    ax.text(L, 0.826, v["hook"][1], family=DISPLAY, weight="bold", size=38,
+            color=INK, ha="left", va="center")
 
-    ax.text(L, 0.722, v["intro"], family=BODY, size=9.6, color=MUTE,
+    # ----------------------------------------------------------------- offer
+    ax.text(L, 0.766, v["offer"], family=DISPLAY, weight="bold", size=31,
+            color=BRAND, ha="left", va="center")
+    ax.text(L, 0.734, v["offer_sub"], family=BODY, size=9.4, color=MUTE,
+            ha="left", va="center")
+
+    # -------------------------------------------------------------- agitate
+    ax.add_patch(Rectangle((L, 0.556), R - L, 0.156, facecolor=PANEL,
+                           edgecolor="none"))
+    ax.text(L + 0.024, 0.694, v["agitate_head"], family=DISPLAY, weight="bold",
+            size=15, color=INK, ha="left", va="center")
+    ax.text(L + 0.024, 0.672, v["agitate"], family=BODY, size=8.8, color=MUTE,
             ha="left", va="top", linespacing=1.6)
 
+    for i, (label, kw) in enumerate(v["cost_rows"]):
+        x = L + 0.024 + i * 0.278
+        ax.text(x, 0.616, label, family=MONO, size=6.0, color=MUTE,
+                ha="left", va="center")
+        ax.text(x, 0.594, f"${kw * 24:,}", family=DISPLAY, weight="bold",
+                size=20, color=BRAND, ha="left", va="center")
+    ax.text(L + 0.024, 0.570,
+            "a year, at $2 per kW, before a single kilowatt-hour of actual power.",
+            family=BODY, size=8.4, color=MUTE, ha="left", va="center")
+
     # ---------------------------------------------------------- the method
-    ax.text(L, 0.660, "HOW WE WORK, IN THIS ORDER", family=DISPLAY,
+    ax.text(L, 0.540, "HOW WE WORK, IN THIS ORDER", family=DISPLAY,
             weight="bold", size=17, color=INK, ha="left", va="center")
-    rule(ax, 0.645, lw=1.2, c=INK)
+    rule(ax, 0.525, lw=1.2, c=INK)
 
     for i, (num, head, body) in enumerate(METHOD):
         x = L + i * (R - L) / 4
-        ax.text(x, 0.622, num, family=MONO, size=6.4, color=BRAND,
+        ax.text(x, 0.502, num, family=MONO, size=6.4, color=BRAND,
                 ha="left", va="center")
-        ax.text(x, 0.600, head, family=DISPLAY, weight="bold", size=13.5,
+        ax.text(x, 0.480, head, family=DISPLAY, weight="bold", size=13.5,
                 color=INK, ha="left", va="center")
-        ax.text(x, 0.580, body, family=BODY, size=8.4, color=MUTE,
+        ax.text(x, 0.460, body, family=BODY, size=8.4, color=MUTE,
                 ha="left", va="top", linespacing=1.55)
 
-    ax.text(L, 0.516,
-            "The first two cost you no capital and often do not involve buying "
-            "anything at all. We would rather tell you\nthat than sell you equipment "
-            "you did not need.",
-            family=BODY, size=9.4, color=INK, ha="left", va="top",
-            linespacing=1.6)
-
     # -------------------------------------------------------------- the case
-    ax.add_patch(Rectangle((L, 0.312), R - L, 0.148, facecolor=PANEL,
+    ax.add_patch(Rectangle((L, 0.268), R - L, 0.124, facecolor=PANEL,
                            edgecolor="none"))
-    ax.text(L + 0.024, 0.438, "ONE PROJECT", family=MONO, size=6.2,
+    ax.text(L + 0.024, 0.372, "ONE PROJECT", family=MONO, size=6.2,
             color=MUTE, ha="left", va="center")
 
     captured = CASE["grant"] + CASE["itc"]
-    ax.text(L + 0.024, 0.396, f"${captured:,}", family=DISPLAY, weight="bold",
-            size=50, color=BRAND, ha="left", va="center")
-    ax.text(L + 0.024, 0.352,
-            f"captured on a ${CASE['project']:,} energy project.",
-            family=BODY, size=10.5, color=INK, ha="left", va="center")
-    ax.text(L + 0.024, 0.330,
-            f"${CASE['grant']:,} federal grant and ${CASE['itc']:,} investment "
-            f"tax credit. {CASE['client']}.",
-            family=BODY, size=8.6, color=MUTE, ha="left", va="center")
+    ax.text(L + 0.024, 0.334, f"${captured:,}", family=DISPLAY, weight="bold",
+            size=44, color=BRAND, ha="left", va="center")
+    ax.text(L + 0.024, 0.296,
+            f"captured on a ${CASE['project']:,} project. ${CASE['grant']:,} "
+            f"federal grant, ${CASE['itc']:,} tax credit. {CASE['client']}.",
+            family=BODY, size=8.8, color=INK, ha="left", va="center")
 
     pct = captured / CASE["project"]
-    ax.text(R - 0.024, 0.396, f"{pct:.0%}", family=DISPLAY, weight="bold",
-            size=50, color=INK, ha="right", va="center")
-    ax.text(R - 0.024, 0.352, "of the project cost", family=BODY, size=10.5,
+    ax.text(R - 0.024, 0.334, f"{pct:.0%}", family=DISPLAY, weight="bold",
+            size=44, color=INK, ha="right", va="center")
+    ax.text(R - 0.024, 0.296, "of the project cost", family=BODY, size=9.4,
             color=MUTE, ha="right", va="center")
 
     # ---------------------------------------------------------- what it fits
-    ax.text(L, 0.282, "ON WHAT KIND OF WORK", family=MONO, size=6.2,
+    ax.text(L, 0.240, "ON WHAT KIND OF WORK", family=MONO, size=6.2,
             color=MUTE, ha="left", va="center")
-    ax.text(L, 0.258, v["equipment"], family=BODY, size=9.4, color=INK,
+    ax.text(L, 0.218, v["equipment"], family=BODY, size=9.4, color=INK,
             ha="left", va="center")
 
     # ------------------------------------------------------------ the terms
-    ax.add_patch(Rectangle((L, 0.150), R - L, 0.072, facecolor=INK,
+    ax.add_patch(Rectangle((L, 0.120), R - L, 0.072, facecolor=INK,
                            edgecolor="none"))
-    ax.text(L + 0.024, 0.198, "NO FEE UNLESS YOU COLLECT.", family=DISPLAY,
+    ax.text(L + 0.024, 0.168, "NO FEE UNLESS YOU COLLECT.", family=DISPLAY,
             weight="bold", size=21, color=PAPER, ha="left", va="center")
-    ax.text(L + 0.024, 0.170,
+    ax.text(L + 0.024, 0.140,
             "We are paid out of what we find. If we find nothing, you owe nothing.",
             family=BODY, size=9.0, color="#B9B0A4", ha="left", va="center")
 
     if PHOTO_TEAM.exists():
-        ax.imshow(imread(str(PHOTO_TEAM)), extent=(R - 0.20, R, 0.150, 0.222),
+        ax.imshow(imread(str(PHOTO_TEAM)), extent=(R - 0.20, R, 0.120, 0.192),
                   aspect="auto", zorder=3)
 
     # ------------------------------------------------------------------ call
-    callbar(ax, "LET US LOOK AT YOUR NEXT PROJECT.",
-            "Tell us what you are planning. We come back with what it qualifies for.")
+    callbar(ax, "SEND US TWELVE MONTHS OF BILLS.",
+            "One call to your co-op. We tell you where your money is going, at no cost.")
     footer(ax)
 
     stem = "cgf_company" if args.vertical == "poultry" else f"cgf_company_{args.vertical}"
