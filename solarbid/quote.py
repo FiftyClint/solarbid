@@ -84,6 +84,22 @@ class BudgetaryQuote:
             return self.ground
         return min(options, key=lambda o: o.payback_years)
 
+    @property
+    def range_note(self) -> str:
+        """The uncertainty, stated once, for the footnotes.
+
+        The grower sees a single number up front; this is where the honesty
+        about how wide it really is lives.
+        """
+        return (
+            f"Consumption is estimated from house dimensions and University of "
+            f"Arkansas audit data, not from your meter. The plausible range is "
+            f"{self.load_low_kwh:,.0f} to {self.load_high_kwh:,.0f} kWh/yr, which "
+            f"corresponds to a system of {self.system_kw_low:,.0f} to "
+            f"{self.system_kw_high:,.0f} kW. Twelve months of your utility bills "
+            f"would replace this estimate with your actual usage."
+        )
+
     def render(self) -> str:
         """Plain-text budgetary summary, suitable for a one-pager."""
         lines = [
@@ -93,14 +109,10 @@ class BudgetaryQuote:
             f"Prepared {self.quote_date}. Budgetary only -- not a bid.",
             "",
             "ESTIMATED ELECTRICITY USE",
-            f"  {self.load_mid_kwh:,.0f} kWh/yr, likely range "
-            f"{self.load_low_kwh:,.0f} to {self.load_high_kwh:,.0f}",
-            "  Derived from house geometry and University of Arkansas audit data.",
-            "  Twelve months of your utility bills would narrow this considerably.",
+            f"  {self.load_mid_kwh:,.0f} kWh/yr",
             "",
             "INDICATIVE SYSTEM SIZE",
-            f"  {self.system_kw_mid:,.0f} kW DC, range {self.system_kw_low:,.0f} to "
-            f"{self.system_kw_high:,.0f} kW depending on actual usage",
+            f"  {self.system_kw_mid:,.0f} kW DC",
             "",
             f"SECTION 48E: {self.itc.summary()}",
         ]
@@ -127,10 +139,131 @@ class BudgetaryQuote:
 
         lines.append("")
         lines.append("BEFORE THIS BECOMES A BID")
+        lines.append(f"  - {self.range_note}")
         for caveat in self.caveats:
             lines.append(f"  - {caveat}")
 
         return "\n".join(lines)
+
+    def render_html(self, prepared_by: str = "") -> str:
+        """Self-contained, printable one-pager.
+
+        No external assets, so it survives being emailed as an attachment, and
+        prints to a single page.
+        """
+
+        def money(x: float) -> str:
+            return f"${x:,.0f}"
+
+        def mount_card(option: MountOption) -> str:
+            if not option.viable:
+                return (
+                    f'<div class="card"><h3>{option.mount.title()} mount</h3>'
+                    "<p class='na'>Not recommended at this site.</p></div>"
+                )
+            rows = [
+                ("System", f"{option.recommended_kw:,.0f} kW DC"),
+                ("Installed cost", money(option.gross_cost)),
+                ("Net after credit &amp; depreciation", money(option.net_cost)),
+                ("Estimated annual savings", f"{money(option.annual_savings)}/yr"),
+                ("Simple payback", f"{option.payback_years:.1f} years"),
+            ]
+            body = "".join(
+                f"<tr><th>{k}</th><td>{v}</td></tr>" for k, v in rows
+            )
+            notes = "".join(f"<p class='note'>{b}</p>" for b in option.blockers)
+            return (
+                f'<div class="card"><h3>{option.mount.title()} mount</h3>'
+                f"<table>{body}</table>{notes}</div>"
+            )
+
+        caveats = "".join(f"<li>{c}</li>" for c in self.caveats)
+        open_items = ""
+        if self.itc.unresolved:
+            items = "".join(f"<li>{u}</li>" for u in self.itc.unresolved)
+            open_items = (
+                "<h2>Open items affecting the credit</h2>"
+                f"<ul class='open'>{items}</ul>"
+            )
+        byline = f"<p class='by'>Prepared by {prepared_by}</p>" if prepared_by else ""
+
+        return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Budgetary Solar Estimate — {self.farm_id}</title>
+<style>
+  :root {{ --ink:#1a1a1a; --mute:#666; --rule:#d8d8d8; --accent:#1c5f3f; --bg:#fff; }}
+  * {{ box-sizing:border-box; }}
+  body {{ margin:0; padding:2.5rem 2rem; background:var(--bg); color:var(--ink);
+         font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+         max-width:52rem; margin-inline:auto; }}
+  header {{ border-bottom:3px solid var(--accent); padding-bottom:1rem; margin-bottom:1.5rem; }}
+  h1 {{ font-size:1.5rem; margin:0 0 .35rem; letter-spacing:-.01em; }}
+  .sub {{ color:var(--mute); font-size:.95rem; margin:0; }}
+  .flag {{ display:inline-block; margin-top:.6rem; padding:.2rem .55rem; border-radius:3px;
+           background:#fdf3d7; color:#6b4e00; font-size:.8rem; font-weight:600;
+           text-transform:uppercase; letter-spacing:.04em; }}
+  .headline {{ display:flex; gap:2.5rem; flex-wrap:wrap; margin:1.5rem 0 2rem; }}
+  .metric {{ flex:1 1 12rem; }}
+  .metric .label {{ font-size:.78rem; text-transform:uppercase; letter-spacing:.06em;
+                    color:var(--mute); margin-bottom:.15rem; }}
+  .metric .value {{ font-size:1.9rem; font-weight:650; line-height:1.15;
+                    color:var(--accent); letter-spacing:-.02em; }}
+  .metric .unit {{ font-size:.95rem; font-weight:400; color:var(--mute); }}
+  .credit {{ background:#f1f6f3; border-left:3px solid var(--accent);
+             padding:.85rem 1rem; margin-bottom:1.75rem; font-size:.95rem; }}
+  h2 {{ font-size:1.05rem; margin:1.75rem 0 .75rem; }}
+  .cards {{ display:flex; gap:1.25rem; flex-wrap:wrap; }}
+  .card {{ flex:1 1 18rem; border:1px solid var(--rule); border-radius:5px; padding:1rem 1.15rem; }}
+  .card h3 {{ margin:0 0 .6rem; font-size:1rem; }}
+  table {{ width:100%; border-collapse:collapse; font-size:.92rem; }}
+  th {{ text-align:left; font-weight:400; color:var(--mute); padding:.3rem 0; }}
+  td {{ text-align:right; font-variant-numeric:tabular-nums; font-weight:600; padding:.3rem 0; }}
+  .note {{ font-size:.8rem; color:var(--mute); margin:.75rem 0 0; padding-top:.6rem;
+           border-top:1px solid var(--rule); }}
+  .na {{ color:var(--mute); font-style:italic; }}
+  ul {{ padding-left:1.1rem; }}
+  li {{ margin:.4rem 0; font-size:.9rem; }}
+  ul.open li {{ color:#7a4a00; }}
+  footer {{ margin-top:2rem; padding-top:1rem; border-top:1px solid var(--rule);
+            font-size:.8rem; color:var(--mute); }}
+  .by {{ margin:.2rem 0 0; }}
+  @media print {{ body {{ padding:0; }} .card {{ break-inside:avoid; }} }}
+</style></head><body>
+<header>
+  <h1>Budgetary Solar Estimate</h1>
+  <p class="sub">{self.county} County, Arkansas &middot; {self.house_count} poultry houses
+     &middot; {self.floor_area_ft2:,.0f} sq ft under roof &middot; ref {self.farm_id}</p>
+  <span class="flag">Budgetary estimate — not a bid</span>
+</header>
+
+<div class="headline">
+  <div class="metric">
+    <div class="label">Estimated electricity use</div>
+    <div class="value">{self.load_mid_kwh:,.0f}<span class="unit"> kWh/yr</span></div>
+  </div>
+  <div class="metric">
+    <div class="label">Indicative system size</div>
+    <div class="value">{self.system_kw_mid:,.0f}<span class="unit"> kW DC</span></div>
+  </div>
+</div>
+
+<div class="credit"><strong>Federal tax credit:</strong> {self.itc.summary()}</div>
+
+<h2>Mounting options</h2>
+<div class="cards">{mount_card(self.roof)}{mount_card(self.ground)}</div>
+
+{open_items}
+
+<h2>Before this becomes a bid</h2>
+<ul><li>{self.range_note}</li>{caveats}</ul>
+
+<footer>
+  Prepared {self.quote_date}. Figures are preliminary planning estimates based on
+  aerial imagery and public data, and are subject to site verification.
+  {byline}
+</footer>
+</body></html>"""
 
 
 def _mount_option(

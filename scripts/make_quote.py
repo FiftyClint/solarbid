@@ -30,6 +30,8 @@ def main() -> int:
     ap.add_argument("--county", required=True)
     ap.add_argument("--farms", type=Path, default=Path("out/peco_farms.csv"))
     ap.add_argument("--out", type=Path, default=None)
+    ap.add_argument("--html", type=Path, default=None, help="Write an HTML one-pager.")
+    ap.add_argument("--prepared-by", default="")
     ap.add_argument(
         "--placed-in-service", type=date.fromisoformat, default=date(2027, 12, 1)
     )
@@ -90,6 +92,10 @@ def main() -> int:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(text)
         print(f"\nWrote {args.out}", file=sys.stderr)
+    if args.html:
+        args.html.parent.mkdir(parents=True, exist_ok=True)
+        args.html.write_text(quote.render_html(args.prepared_by), encoding="utf-8")
+        print(f"Wrote {args.html}", file=sys.stderr)
     return 0
 
 

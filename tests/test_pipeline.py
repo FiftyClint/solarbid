@@ -567,3 +567,53 @@ class TestOversizingBound:
             load.mid_kwh, 20_000.0, net_cost_per_watt=fin.net_cost_per_watt
         )
         assert kw < ArkansasTariff().max_project_kw
+
+
+
+class TestQuoteHtml:
+    """The grower-facing one-pager."""
+
+    def _quote(self):
+        from solarbid.quote import budgetary_quote
+        from solarbid.siting import roof_capacity_kw as roof_cap
+
+        floor = 10 * 560 * 56
+        itc = incentives.itc_rate(
+            system_kw_ac=325,
+            quote_date=TODAY,
+            expected_placed_in_service=TARGET_PIS,
+            domestic_content=True,
+            energy_community=incentives.energy_community_by_county("Randolph"),
+        )
+        return budgetary_quote(
+            farm_id="farm_00167",
+            county="Randolph",
+            house_count=10,
+            floor_area_ft2=floor,
+            load=estimate_load(floor),
+            roof_capacity_kw=roof_cap(floor),
+            ground_capacity_kw=2000.0,
+            itc=itc,
+            quote_date=TODAY,
+        )
+
+    def test_html_leads_with_the_midpoint_not_the_range(self):
+        q = self._quote()
+        html = q.render_html()
+        assert f"{q.load_mid_kwh:,.0f}" in html
+        assert f"{q.load_low_kwh:,.0f} to" not in html.split("Before this becomes")[0]
+
+    def test_html_still_states_the_range_in_the_footnotes(self):
+        q = self._quote()
+        html = q.render_html()
+        assert f"{q.load_low_kwh:,.0f}" in html
+        assert f"{q.system_kw_high:,.0f} kW" in html
+
+    def test_html_is_self_contained(self):
+        """Must survive being emailed as an attachment."""
+        html = self._quote().render_html()
+        for external in ("http://", "https://", "<script", "src="):
+            assert external not in html
+
+    def test_html_is_marked_as_not_a_bid(self):
+        assert "not a bid" in self._quote().render_html().lower()
