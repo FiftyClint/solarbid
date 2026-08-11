@@ -32,15 +32,18 @@ CASE = {
     "itc": 160_440,
 }
 
-LEVERS = [
-    ("FEDERAL TAX CREDIT",
-     "The investment credit, plus adders for\ndomestic content and location."),
-    ("DEPRECIATION",
-     "MACRS and bonus depreciation, taken\nin the first year where it applies."),
-    ("FEDERAL AND STATE GRANTS",
-     "Programs you qualify for and almost\ncertainly have not heard of."),
-    ("RATE AND TARIFF",
-     "Rate class and demand charges. Costs\nno capital to fix."),
+# The order is the pitch. Rate and efficiency come before anyone talks about
+# equipment, and neither requires the customer to buy anything, which is what
+# separates CGF from a company selling boxes.
+METHOD = [
+    ("01", "RATE ANALYSIS",
+     "We read your bill first.\nRate class and demand\ncharges."),
+    ("02", "ENERGY EFFICIENCY",
+     "Cut the load before you\ncover it. Lighting, controls,\nmotors, HVAC."),
+    ("03", "INCENTIVE CAPTURE",
+     "Tax credit and adders,\nMACRS, depreciation,\nfederal and state grants."),
+    ("04", "DESIGN AND EXECUTION",
+     "Specification and the\npaperwork that actually\ncollects it."),
 ]
 
 EQUIPMENT = ("Efficiency upgrades  ·  HVAC  ·  Refrigeration  ·  Lighting  ·  "
@@ -66,69 +69,74 @@ def main():
             family=DISPLAY, weight="bold", size=36, color=BRAND,
             ha="left", va="center")
 
-    ax.text(L, 0.722,
-            "CGF is not an equipment company. We work the incentive side of energy "
-            "projects: what you\nqualify for, what it is worth, and what it takes "
-            "to actually collect it.",
+    ax.text(L, 0.726,
+            "CGF is not an equipment company. We work the energy and incentive "
+            "side of a project:\nwhat you use, what you qualify for, and what it "
+            "takes to actually collect it.",
             family=BODY, size=9.6, color=MUTE, ha="left", va="top",
             linespacing=1.6)
 
+    # ---------------------------------------------------------- the method
+    ax.text(L, 0.660, "HOW WE WORK, IN THIS ORDER", family=DISPLAY,
+            weight="bold", size=17, color=INK, ha="left", va="center")
+    rule(ax, 0.645, lw=1.2, c=INK)
+
+    for i, (num, head, body) in enumerate(METHOD):
+        x = L + i * (R - L) / 4
+        ax.text(x, 0.622, num, family=MONO, size=6.4, color=BRAND,
+                ha="left", va="center")
+        ax.text(x, 0.600, head, family=DISPLAY, weight="bold", size=13.5,
+                color=INK, ha="left", va="center")
+        ax.text(x, 0.580, body, family=BODY, size=8.4, color=MUTE,
+                ha="left", va="top", linespacing=1.55)
+
+    ax.text(L, 0.516,
+            "The first two cost you no capital and often do not involve buying "
+            "anything at all. We would rather tell you\nthat than sell you equipment "
+            "you did not need.",
+            family=BODY, size=9.4, color=INK, ha="left", va="top",
+            linespacing=1.6)
+
     # -------------------------------------------------------------- the case
-    ax.add_patch(Rectangle((L, 0.508), R - L, 0.156, facecolor=PANEL,
+    ax.add_patch(Rectangle((L, 0.312), R - L, 0.148, facecolor=PANEL,
                            edgecolor="none"))
-    ax.text(L + 0.024, 0.640, "ONE PROJECT", family=MONO, size=6.2,
+    ax.text(L + 0.024, 0.438, "ONE PROJECT", family=MONO, size=6.2,
             color=MUTE, ha="left", va="center")
 
     captured = CASE["grant"] + CASE["itc"]
-    ax.text(L + 0.024, 0.596, f"${captured:,}", family=DISPLAY, weight="bold",
-            size=54, color=BRAND, ha="left", va="center")
-    ax.text(L + 0.024, 0.548,
+    ax.text(L + 0.024, 0.396, f"${captured:,}", family=DISPLAY, weight="bold",
+            size=50, color=BRAND, ha="left", va="center")
+    ax.text(L + 0.024, 0.352,
             f"captured on a ${CASE['project']:,} energy project.",
             family=BODY, size=10.5, color=INK, ha="left", va="center")
-    ax.text(L + 0.024, 0.525,
+    ax.text(L + 0.024, 0.330,
             f"${CASE['grant']:,} federal grant and ${CASE['itc']:,} investment "
             f"tax credit. {CASE['client']}.",
             family=BODY, size=8.6, color=MUTE, ha="left", va="center")
 
     pct = captured / CASE["project"]
-    ax.text(R - 0.024, 0.596, f"{pct:.0%}", family=DISPLAY, weight="bold",
-            size=54, color=INK, ha="right", va="center")
-    ax.text(R - 0.024, 0.548, "of the project cost", family=BODY, size=10.5,
+    ax.text(R - 0.024, 0.396, f"{pct:.0%}", family=DISPLAY, weight="bold",
+            size=50, color=INK, ha="right", va="center")
+    ax.text(R - 0.024, 0.352, "of the project cost", family=BODY, size=10.5,
             color=MUTE, ha="right", va="center")
 
-    # ------------------------------------------------------------- the levers
-    ax.text(L, 0.470, "WHERE THE MONEY COMES FROM", family=DISPLAY,
-            weight="bold", size=17, color=INK, ha="left", va="center")
-    rule(ax, 0.455, lw=1.2, c=INK)
-
-    for i, (head, body) in enumerate(LEVERS):
-        col = i % 2
-        row = i // 2
-        x = L + col * (R - L) / 2
-        y = 0.424 - row * 0.078
-        ax.text(x, y, head, family=DISPLAY, weight="bold", size=14,
-                color=BRAND, ha="left", va="center")
-        ax.text(x, y - 0.018, body, family=BODY, size=8.8, color=MUTE,
-                ha="left", va="top", linespacing=1.55)
-
     # ---------------------------------------------------------- what it fits
-    rule(ax, 0.276)
-    ax.text(L, 0.256, "ON WHAT KIND OF PROJECT", family=MONO, size=6.2,
+    ax.text(L, 0.282, "ON WHAT KIND OF PROJECT", family=MONO, size=6.2,
             color=MUTE, ha="left", va="center")
-    ax.text(L, 0.232, EQUIPMENT, family=BODY, size=10.0, color=INK,
+    ax.text(L, 0.258, EQUIPMENT, family=BODY, size=10.0, color=INK,
             ha="left", va="center")
 
     # ------------------------------------------------------------ the terms
-    ax.add_patch(Rectangle((L, 0.128), R - L, 0.072, facecolor=INK,
+    ax.add_patch(Rectangle((L, 0.150), R - L, 0.072, facecolor=INK,
                            edgecolor="none"))
-    ax.text(L + 0.024, 0.176, "NO FEE UNLESS YOU COLLECT.", family=DISPLAY,
+    ax.text(L + 0.024, 0.198, "NO FEE UNLESS YOU COLLECT.", family=DISPLAY,
             weight="bold", size=21, color=PAPER, ha="left", va="center")
-    ax.text(L + 0.024, 0.148,
+    ax.text(L + 0.024, 0.170,
             "We are paid out of what we find. If we find nothing, you owe nothing.",
             family=BODY, size=9.0, color="#B9B0A4", ha="left", va="center")
 
     if PHOTO_TEAM.exists():
-        ax.imshow(imread(str(PHOTO_TEAM)), extent=(R - 0.20, R, 0.128, 0.200),
+        ax.imshow(imread(str(PHOTO_TEAM)), extent=(R - 0.20, R, 0.150, 0.222),
                   aspect="auto", zorder=3)
 
     # ------------------------------------------------------------------ call
