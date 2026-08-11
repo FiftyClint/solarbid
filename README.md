@@ -14,7 +14,7 @@ polygon dataset has **not** been ingested yet — see [Blocked](#blocked).
 
 ```bash
 pip install -r requirements.txt
-python -m pytest tests/          # 35 passing, synthetic geometry
+python -m pytest tests/          # 40 passing, synthetic geometry
 python scripts/run_spike.py      # needs the dataset (see below)
 ```
 
@@ -78,7 +78,7 @@ The gap this opens is the central design insight:
 4-house farm, 86,000 sq ft under roof
   load             : 150,309 kWh/yr  (range 68,322 – 283,537)
   roof capacity    : 426 kW DC       ← physical
-  recommended      : 150 kW DC       ← economic, at the full 50% stack
+  recommended      : 185 kW DC       ← economic, at the full 50% stack
 ```
 
 Surface is never the constraint. Self-consumption is.
@@ -108,10 +108,20 @@ sets the schedule for everything else.
 - **Domestic content — +10%.** Adjusted percentage threshold is **50%** for a
   2026 construction start, 55% for 2027. Evidenced via the Notice 2025-08
   elective safe harbor tables.
-- **Energy community — +10%.** Per **census tract**, from IRS Notice 2026-39
-  (2026-06-10). **Cannot be inferred from the county** — it must be looked up per
-  site at [energycommunities.gov](https://energycommunities.gov/energy-community-tax-credit-bonus/).
-  Randolph County status is currently unresolved in this repo.
+- **Energy community — +10% of project cost.** The Peco footprint qualifies
+  under the **Statistical Area** category, which resolves to whole counties.
+  Confirmed eligible: **Randolph, Clay, Lawrence, Greene, Independence, Izard,
+  Sharp, Fulton, Jackson, Mississippi** — Pocahontas sits in Randolph, so the
+  plant's home county is in. Craighead (Jonesboro) is not.
+  `energy_community_by_county()` carries the list.
+
+  Statistical Area status is **redetermined annually** on the unemployment
+  test, so the list has a shelf life. What defuses that is the Notice 2023-29
+  **beginning-of-construction safe harbor**: a project in an energy community
+  on its BOC date is treated as being in one at placed-in-service, for the full
+  credit. Starting construction while these counties are on the current list
+  locks the 10 points — the calendar risk is on the start date, not the
+  finish date.
 - **Bonus depreciation — 100%, permanent** for property acquired after
   2025-01-19. Depreciable basis is reduced by half the ITC, so a 50% credit
   leaves 75% of cost depreciable. Note OBBBA also repealed 5-year MACRS for
@@ -127,27 +137,24 @@ sets the schedule for everything else.
 
 ### What the stack does to a four-house farm
 
-Gross $2.35/W, load 150,309 kWh/yr, roof capacity 426 kW DC:
+At our $2.10/W, load 150,309 kWh/yr, roof capacity 426 kW DC, in Randolph County:
 
 | Scenario | ITC | Grower tax rate | Net $/W | Size | Payback |
 |---|---|---|---|---|---|
-| Gross cost, no tax benefit | 0% | 0% | $2.35 | 0 kW | — |
-| Depreciation only, no ITC | 0% | 30% | $1.65 | 50 kW | 10.4 yr |
-| Base ITC + depreciation | 30% | 30% | $1.05 | 95 kW | 7.6 yr |
-| + Domestic content | 40% | 30% | $0.85 | 130 kW | 6.9 yr |
-| **Full stack (DC + EC)** | **50%** | **30%** | **$0.65** | **150 kW** | **5.7 yr** |
-| Full stack, low tax appetite | 50% | 10% | $1.00 | 100 kW | 7.4 yr |
-| Full stack, no tax appetite | 50% | 0% | $1.18 | 85 kW | 8.2 yr |
+| Base ITC + depreciation | 30% | 30% | $0.93 | 120 kW | 7.4 yr |
+| + Energy community | 40% | 30% | $0.76 | 140 kW | 6.4 yr |
+| **+ Domestic content** | **50%** | **30%** | **$0.58** | **185 kW** | **5.6 yr** |
+| Full stack, low tax appetite | 50% | 10% | $0.89 | 125 kW | 7.2 yr |
 
 Two things fall out of this. The adders don't just cut the price — they change
-the **system**, tripling the economically sensible array from 50 kW to 150 kW,
+the **system**, taking the economically sensible array from 120 kW to 185 kW,
 because cheaper capacity stays worth building further up the declining
 self-consumption curve.
 
 And **the grower's tax rate moves the answer nearly as much as the adders do**.
 Net cost is a property of the buyer, not the project. Many contract growers
 cannot absorb a 50% credit plus full first-year expensing, and a Sec. 6418
-transfer on a single 50 kW system realises ~$54k of a $58.7k credit before
+transfer on a single 50 kW system realises ~$48k of a $52.5k credit before
 diligence cost — which only works aggregated across farms. Confirm tax capacity
 with the grower's CPA before any of these numbers become a price.
 
@@ -163,15 +170,16 @@ with the grower's CPA before any of these numbers become a price.
   binding proposal.
 - **No PVWatts yet.** Specific yield is a flat 1,450 kWh/kW. NREL PVWatts v8 keyed
   off each farm's centroid and ridge azimuth is the next integration.
-- **Pricing is unanchored.** $/W figures are placeholders until real bids land.
+- **Pricing is a single blended number.** $2.10/W for roof and ground alike.
+  Mounting type changes the engineering and site work, so this will need to
+  split once real bids come in.
 - **Co-op tariffs are unmodelled.** Craighead, Clay County, Farmers and Woodruff
   each set their own rates and demand charges, with no clean API. Hand-entry per
   utility, verified per quote.
-- **Energy community status is unresolved.** Worth 10 points — a third of the
-  credit — and it is a per-tract lookup against Notice 2026-39 that has not been
-  run for the Peco footprint. Do this before quoting; the two most likely
-  qualifying routes here are coal-closure tract adjacency and the statistical
-  area criterion.
+- **Energy community list needs an annual refresh.** Statistical Area status is
+  redetermined each year. The county list here reflects the current notice;
+  re-check it annually, and lean on the BOC safe harbor to lock status on
+  projects already started.
 - **Domestic content is asserted, not evidenced.** The model takes a boolean.
   Actually claiming it needs a bill of materials clearing 50% adjusted
   percentage, run through the Notice 2025-08 safe harbor tables.

@@ -47,12 +47,46 @@ DOMESTIC_CONTENT_THRESHOLD_BY_BOC_YEAR = {
 }
 
 # --- Energy community ------------------------------------------------------
-# Notice 2026-39 (issued 2026-06-10) is the current eligibility list, updating
-# the Statistical Area and Coal Closure categories against MSHA/EIA data as of
-# 2026-05-04. Eligibility is per census tract and cannot be inferred from a
-# county name -- it must be looked up.
+# Notice 2026-39 (issued 2026-06-10) is the current eligibility list.
+#
+# Two categories with different geographic units. Coal Closure is per census
+# tract. Statistical Area is per MSA/non-MSA, which resolves to whole counties
+# -- and that is the category carrying northeast Arkansas, where a contiguous
+# block of counties qualifies on fossil fuel employment plus an unemployment
+# rate at or above the national average.
 ENERGY_COMMUNITY_NOTICE = "Notice 2026-39 (2026-06-10)"
 ENERGY_COMMUNITY_MAPPER = "https://energycommunities.gov/energy-community-tax-credit-bonus/"
+
+# Qualifying counties in the Peco Pocahontas footprint, read off the DOE mapper
+# (last updated 2024-07-07 on the tile shown). Pocahontas itself sits in
+# Randolph, so the plant's home county qualifies.
+#
+# Statistical Area status is redetermined ANNUALLY against the unemployment
+# test, so this list has a shelf life and must be re-checked against the
+# current notice each year. See ENERGY_COMMUNITY_LOCKED_AT_BOC below for why
+# that matters less than it sounds.
+ENERGY_COMMUNITY_COUNTIES_AR = frozenset(
+    {
+        "Randolph",
+        "Clay",
+        "Lawrence",
+        "Greene",
+        "Independence",
+        "Izard",
+        "Sharp",
+        "Fulton",
+        "Jackson",
+        "Mississippi",
+    }
+)
+
+# Notice 2023-29 beginning-of-construction safe harbor: a project in an energy
+# community as of its BOC date is treated as being in one on the ITC
+# placed-in-service date, for the whole credit. Combined with annual
+# redetermination, this makes starting construction while a county is on the
+# list the thing that actually locks the 10 points.
+ENERGY_COMMUNITY_LOCKED_AT_BOC = True
+ENERGY_COMMUNITY_SAFE_HARBOR = "Notice 2023-29 beginning-of-construction safe harbor"
 
 # --- FEOC / material assistance --------------------------------------------
 # OBBBA denies 48E entirely where a project receives material assistance from a
@@ -65,6 +99,19 @@ FEOC_GUIDANCE = "Notice 2026-15 (2026-02-12)"
 
 # --- USDA REAP -------------------------------------------------------------
 REAP_GRANTS_HALTED_ON = date(2026, 3, 31)
+
+
+def energy_community_by_county(county: str, state: str = "AR") -> bool | None:
+    """Whether a county qualifies under the Statistical Area category.
+
+    Returns None outside Arkansas, where this module carries no list -- an
+    unknown must not resolve to a favourable assumption. Note this covers the
+    Statistical Area category only; a site in a non-qualifying county may still
+    sit in a Coal Closure tract, which is a separate per-tract lookup.
+    """
+    if state.upper() != "AR":
+        return None
+    return county.strip().title() in ENERGY_COMMUNITY_COUNTIES_AR
 
 
 @dataclass(frozen=True)
@@ -216,15 +263,17 @@ def itc_rate(
     if energy_community is True:
         ec_adder = ENERGY_COMMUNITY_ADDER
         conditions.append(
-            f"Energy community claimed: confirm the site's census tract appears in "
-            f"{ENERGY_COMMUNITY_NOTICE}."
+            f"Energy community claimed against {ENERGY_COMMUNITY_NOTICE}. Statistical "
+            "Area status is redetermined annually on the unemployment test, but the "
+            f"{ENERGY_COMMUNITY_SAFE_HARBOR} fixes status as of the construction start "
+            "date. Begin construction while the county is on the current list and the "
+            "10 points are locked for the placed-in-service date."
         )
     elif energy_community is None:
         unresolved.append(
-            f"Energy community ({ENERGY_COMMUNITY_ADDER:.0%}) undetermined -- look the "
-            f"site's census tract up against {ENERGY_COMMUNITY_NOTICE} at "
-            f"{ENERGY_COMMUNITY_MAPPER}. Eligibility is per tract and cannot be "
-            "inferred from the county."
+            f"Energy community ({ENERGY_COMMUNITY_ADDER:.0%} of project cost) "
+            f"undetermined -- check the county against {ENERGY_COMMUNITY_NOTICE} via "
+            f"energy_community_by_county(), or {ENERGY_COMMUNITY_MAPPER}."
         )
 
     # FEOC applies to every project starting construction now.

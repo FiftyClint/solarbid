@@ -171,11 +171,37 @@ class TestITC:
         assert len(result.unresolved) == 2
         assert not result.is_fully_resolved
 
-    def test_energy_community_is_flagged_for_tract_lookup(self):
+    def test_energy_community_is_flagged_when_undetermined(self):
         result = incentives.itc_rate(
             system_kw_ac=50, quote_date=TODAY, expected_placed_in_service=TARGET_PIS
         )
-        assert any("census tract" in u for u in result.unresolved)
+        assert any("Energy community" in u for u in result.unresolved)
+
+    def test_peco_footprint_counties_qualify(self):
+        """Pocahontas sits in Randolph, so the plant's home county qualifies."""
+        for county in ("Randolph", "Clay", "Lawrence", "Greene", "Independence",
+                       "Izard", "Sharp", "Fulton", "Jackson", "Mississippi"):
+            assert incentives.energy_community_by_county(county) is True, county
+
+    def test_county_lookup_is_case_insensitive(self):
+        assert incentives.energy_community_by_county("randolph") is True
+
+    def test_counties_off_the_list_do_not_qualify(self):
+        assert incentives.energy_community_by_county("Craighead") is False
+
+    def test_outside_arkansas_is_unknown_not_false(self):
+        """No list carried for other states; unknown must not read as ineligible."""
+        assert incentives.energy_community_by_county("Randolph", state="MO") is None
+
+    def test_energy_community_claim_cites_the_boc_safe_harbor(self):
+        """Annual redetermination is survivable only by starting construction."""
+        result = incentives.itc_rate(
+            system_kw_ac=50,
+            quote_date=TODAY,
+            expected_placed_in_service=TARGET_PIS,
+            energy_community=True,
+        )
+        assert any("construction start" in c for c in result.conditions)
 
     def test_domestic_content_threshold_rises_with_construction_year(self):
         y26 = incentives.itc_rate(
@@ -209,39 +235,39 @@ class TestITC:
 
 class TestFinance:
     def test_bonus_depreciation_roughly_halves_net_cost_at_30_percent(self):
-        fin = project_finance(50, 2.35, itc_rate=0.30, tax_rate=0.30)
-        assert 0.95 < fin.net_cost_per_watt < 1.15
+        fin = project_finance(50, 2.10, itc_rate=0.30, tax_rate=0.30)
+        assert 0.85 < fin.net_cost_per_watt < 1.05
         assert fin.total_benefit_fraction > 0.50
 
     def test_full_stack_drives_net_cost_under_a_dollar(self):
-        fin = project_finance(50, 2.35, itc_rate=0.50, tax_rate=0.30)
+        fin = project_finance(50, 2.10, itc_rate=0.50, tax_rate=0.30)
         assert fin.net_cost_per_watt < 0.75
         assert fin.total_benefit_fraction > 0.70
 
     def test_itc_reduces_depreciable_basis_by_half_the_credit(self):
-        fin = project_finance(50, 2.35, itc_rate=0.50, tax_rate=0.30)
+        fin = project_finance(50, 2.10, itc_rate=0.50, tax_rate=0.30)
         assert fin.depreciable_basis == pytest.approx(
             fin.gross_cost - 0.5 * fin.itc_amount
         )
 
     def test_low_tax_appetite_materially_worsens_the_deal(self):
         """Net cost is a property of the grower, not just the project."""
-        high = project_finance(50, 2.35, itc_rate=0.50, tax_rate=0.35)
-        low = project_finance(50, 2.35, itc_rate=0.50, tax_rate=0.10)
+        high = project_finance(50, 2.10, itc_rate=0.50, tax_rate=0.35)
+        low = project_finance(50, 2.10, itc_rate=0.50, tax_rate=0.10)
         assert low.net_cost > high.net_cost
         assert any("tax capacity" in c for c in low.caveats)
 
     def test_every_financed_quote_carries_monetisation_caveats(self):
-        fin = project_finance(50, 2.35, itc_rate=0.50, tax_rate=0.30)
+        fin = project_finance(50, 2.10, itc_rate=0.50, tax_rate=0.30)
         assert fin.caveats
         assert any("passive activity" in c.lower() for c in fin.caveats)
 
     def test_credit_transfer_clears_below_par(self):
-        fin = project_finance(50, 2.35, itc_rate=0.50, tax_rate=0.30)
+        fin = project_finance(50, 2.10, itc_rate=0.50, tax_rate=0.30)
         assert transfer_value(fin.itc_amount) < fin.itc_amount
 
     def test_zero_incentives_leaves_gross_cost_intact(self):
-        fin = project_finance(50, 2.35, itc_rate=0.0, tax_rate=0.0)
+        fin = project_finance(50, 2.10, itc_rate=0.0, tax_rate=0.0)
         assert fin.net_cost == pytest.approx(fin.gross_cost)
 
 
@@ -263,7 +289,7 @@ class TestSiting:
         assert blended_value_per_kwh(0.2, tariff) > blended_value_per_kwh(2.0, tariff)
 
     def test_nothing_pencils_at_gross_cost(self, four_house_farm):
-        """At $2.35/W and 12c retail, unsubsidised payback is ~13.5 years."""
+        """At $2.10/W and 12c retail, unsubsidised payback is ~13.5 years."""
         load = estimate_load(four_house_farm)
         roof_kw = roof_capacity_kw(four_house_farm)
         assert recommend_size_kw(load.mid_kwh, roof_kw) == 0.0

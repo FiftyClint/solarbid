@@ -146,10 +146,15 @@ class ArkansasTariff:
 
 @dataclass(frozen=True)
 class Pricing:
-    """Installed cost before incentives. Placeholder until real bids anchor it."""
+    """Installed cost before incentives, in $/W DC.
+
+    $2.10/W is our quoted price for this program, roof and ground alike.
+    Mounting type changes the engineering and the site work, not the number we
+    put in front of a grower.
+    """
 
     roof_cost_per_watt: float = 2.10
-    ground_cost_per_watt: float = 2.35
+    ground_cost_per_watt: float = 2.10
 
 
 @dataclass(frozen=True)
