@@ -28,10 +28,14 @@ HEAD = "Work Sans"
 SERIF = "IBM Plex Serif"
 MONO = "Geist Mono"
 
+# Derived, not hand-entered. Regenerate with scripts/segment_table.py after any
+# change to the account file or the pricing assumptions. Rows are at FARM grain:
+# the workbook's grain is the meter, and a per-account median described half a
+# farm for every grower carrying two meters.
 TABLE = [
-    ("2 houses", "125,760", "75 kW", "$157,500", "$78,750", "$10,500", "4.1 yrs"),
-    ("4 houses", "194,880", "115 kW", "$241,500", "$120,750", "$16,200", "4.1 yrs"),
-    ("6 houses", "343,680", "205 kW", "$430,500", "$215,250", "$28,700", "4.1 yrs"),
+    ("3 houses", "232,080", "140 kW", "$294,000", "$147,000", "$19,400", "4.2 yrs"),
+    ("4 houses", "247,200", "150 kW", "$315,000", "$157,500", "$20,700", "4.2 yrs"),
+    ("5-6 houses", "331,200", "200 kW", "$420,000", "$210,000", "$27,700", "4.2 yrs"),
 ]
 COLS = ["", "kWh/year", "System", "Installed", "Federal credit", "Saves/year",
         "Payback"]
@@ -79,7 +83,7 @@ def main():
 
     flow.text("What Solar Looks Like on a Poultry Farm Here", HEAD, 19,
               weight="bold", leading=1.25, gap_after=0.008)
-    flow.text("Figures from metered usage on 115 broiler farms in northeast "
+    flow.text("Figures from metered usage on 76 broiler farms in northeast "
               "Arkansas. Not a projection.", SERIF, 10.2, color=MUTE,
               leading=1.4)
 

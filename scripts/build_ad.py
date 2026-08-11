@@ -2,7 +2,7 @@
 """CGF solar flyer, sized to the reader's farm. Goes out with the company
 flyer and a handwritten note.
 
-Every figure comes from metered usage across 115 broiler accounts in the Peco
+Every figure comes from metered usage across 76 broiler farms in the Peco
 footprint, priced at $2.00/W roof with the 50% credit and bonus depreciation.
 
 Palette, type and furniture come from brand.py, so all three pieces move
@@ -24,7 +24,7 @@ from brand import (  # noqa: E402
     rule, slot,
 )
 
-# Metered medians across 115 broiler accounts, priced at $2.10/W GROUND, with
+# Metered medians across 76 broiler farms, priced at $2.10/W GROUND, with
 # the 50% credit and 100% bonus depreciation at a 30% marginal rate.
 #
 # Ground, not roof, because the photographs above are ground mounts. Pricing a
@@ -32,9 +32,9 @@ from brand import (  # noqa: E402
 # notices. Roof comes in about 5% cheaper and lands at 3.9 years, which is why
 # the headline says about four rather than under four.
 TABLE = [
-    ("2 houses", "125,760", "75 kW", "$157,500", "$10,500", "4.1 yrs"),
-    ("4 houses", "194,880", "115 kW", "$241,500", "$16,200", "4.1 yrs"),
-    ("6 houses", "343,680", "205 kW", "$430,500", "$28,700", "4.1 yrs"),
+    ("3 houses", "232,080", "140 kW", "$294,000", "$19,400", "4.2 yrs"),
+    ("4 houses", "247,200", "150 kW", "$315,000", "$20,700", "4.2 yrs"),
+    ("5-6 houses", "331,200", "200 kW", "$420,000", "$27,700", "4.2 yrs"),
 ]
 
 
@@ -57,7 +57,7 @@ def main():
             weight="bold", size=31, color=INK, ha="left", va="center")
 
     ax.text(L, 0.712,
-            "Figures from metered usage on 115 broiler farms in this area. Not a projection.",
+            "Figures from metered usage on 76 broiler farms in this area. Not a projection.",
             family=BODY, size=8.2, color=MUTE, ha="left", va="center")
 
     # ----------------------------------------------------------------- photo

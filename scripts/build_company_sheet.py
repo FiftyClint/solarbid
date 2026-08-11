@@ -142,7 +142,7 @@ def main():
     section_head(flow, "→", "Here is what that might look like on your farm")
     flow.text("The sheet with this one runs the numbers at two, four and six "
               "houses: cost, credit, savings and payback. Those figures come "
-              "from metered usage on 115 broiler farms around here.",
+              "from metered usage on 76 broiler farms around here.",
               SERIF, 9.5, leading=1.48)
 
     print(f"content ends at y={flow.y:.3f}")

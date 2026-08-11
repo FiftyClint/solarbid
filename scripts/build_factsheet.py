@@ -33,10 +33,12 @@ HEAD = "Work Sans"
 SERIF = "IBM Plex Serif"
 MONO = "Geist Mono"
 
+# Derived by scripts/segment_table.py at farm grain. Keep in step with the solar
+# sheet; both pieces go in the same envelope and cannot disagree.
 TABLE = [
-    ("2 houses", "125,760", "75 kW", "$157,500", "$78,750", "$10,500", "4.1 yrs"),
-    ("4 houses", "194,880", "115 kW", "$241,500", "$120,750", "$16,200", "4.1 yrs"),
-    ("6 houses", "343,680", "205 kW", "$430,500", "$215,250", "$28,700", "4.1 yrs"),
+    ("3 houses", "232,080", "140 kW", "$294,000", "$147,000", "$19,400", "4.2 yrs"),
+    ("4 houses", "247,200", "150 kW", "$315,000", "$157,500", "$20,700", "4.2 yrs"),
+    ("5-6 houses", "331,200", "200 kW", "$420,000", "$210,000", "$27,700", "4.2 yrs"),
 ]
 COLS = ["", "kWh/year", "System", "Installed", "Federal credit", "Saves/year",
         "Payback"]
@@ -179,10 +181,11 @@ def main():
     flow.gap(0.012)
     flow.text("Ground mount at $2.10 per watt installed, as pictured below. "
               "Roof runs about 5% less where the trusses will carry it, and "
-              "gets quoted alongside. Usage figures are medians from metered "
-              "accounts on 115 broiler farms in this area, annualized from a "
-              "single billing period. Your own twelve months would replace "
-              "them.", SERIF, 8.8, color=MUTE, leading=1.45, gap_after=0.018)
+              "gets quoted alongside. Usage figures are medians across 76 "
+              "metered broiler farms in this area, counting all of a farm's "
+              "meters together and annualized from a single billing period. "
+              "Your own twelve months would replace them.",
+              SERIF, 8.8, color=MUTE, leading=1.45, gap_after=0.018)
 
     section_head(flow, "6", "What these look like on the ground")
     flow.gap(0.008)
