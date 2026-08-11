@@ -4,9 +4,18 @@ Drop these in and re-run the build scripts. Nothing else changes.
 
 | File | What it is | Status |
 |---|---|---|
-| `cgf_logo.png` | CGF logo, transparent PNG, roughly 4:1 landscape crop of the wordmark lockup | **still needed** |
-| `poultry_roof.jpg` | Poultry house with a roof array. Landscape, 3:1 or wider. A real NEA Solar install beats stock. | **still needed** |
-| `cgf_team.jpg` | Optional. Appears bottom right of the company flyer if present. | optional |
+| `cgf_logo.png` | CGF logo, transparent PNG, roughly 4:1 crop of the wordmark lockup | **still needed** |
+| `ground_mount_1.jpg` | Real ground mount install | **still needed** |
+| `ground_mount_2.jpg` | Second ground mount install | **still needed** |
+| `poultry_roof.jpg` | Optional. A poultry roof array, if one exists. | optional |
+| `cgf_team.jpg` | Optional. Bottom right of the company flyer if present. | optional |
+
+The solar flyer lays out however many photos it finds, side by side in one
+band. Two real jobs read as a track record; one reads as stock. Landscape crops
+work best since each gets a half-width slot.
+
+Images attached in chat do not reach this filesystem. Copy them into `assets/`
+from a local clone and push.
 
 Build:
 

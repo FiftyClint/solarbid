@@ -53,6 +53,12 @@ LOGO_PATH = ASSETS / "cgf_logo.png"
 PHOTO_ROOF = ASSETS / "poultry_roof.jpg"
 PHOTO_TEAM = ASSETS / "cgf_team.jpg"
 
+# Real CGF/NEA Solar ground mount installs. Two of them run side by side on the
+# solar flyer, which is stronger than one wide crop: two jobs reads as a track
+# record, one reads as a stock photo.
+PHOTO_GROUND = [ASSETS / "ground_mount_1.jpg", ASSETS / "ground_mount_2.jpg"]
+
+
 PAGE_W, PAGE_H = 8.5, 11.0
 L, R = 0.075, 0.925
 
@@ -67,6 +73,24 @@ def slot(ax, x0, y0, x1, y1, label, sub=""):
     if sub:
         ax.text((x0 + x1) / 2, (y0 + y1) / 2 - 0.014, sub, family=MONO,
                 size=5.8, color=MUTE, ha="center", va="center")
+
+
+def photo_band(ax, x0, x1, y0, y1, paths, fallback_label, fallback_sub=""):
+    """Fill a band with however many real photos exist, else a placeholder."""
+    from matplotlib.image import imread
+
+    have = [p for p in paths if p.exists()]
+    if not have:
+        slot(ax, x0, y0, x1, y1, fallback_label, fallback_sub)
+        return 0
+
+    gap = 0.012
+    w = ((x1 - x0) - gap * (len(have) - 1)) / len(have)
+    for i, path in enumerate(have):
+        left = x0 + i * (w + gap)
+        ax.imshow(imread(str(path)), extent=(left, left + w, y0, y1),
+                  aspect="auto", zorder=2)
+    return len(have)
 
 
 def rule(ax, y, x0=L, x1=R, c=RULE_C, lw=0.8):

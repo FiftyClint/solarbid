@@ -20,7 +20,8 @@ from matplotlib.patches import Rectangle  # noqa: E402
 
 from brand import (  # noqa: E402
     ACCENT, BODY, BRAND, DISPLAY, INK, L, MONO, MUTE, PAGE_H, PAGE_W, PAPER,
-    PHOTO_ROOF, R, callbar, footer, masthead, rule, slot,
+    PHOTO_GROUND, PHOTO_ROOF, R, callbar, footer, masthead, photo_band,
+    rule, slot,
 )
 
 # Metered medians across 115 broiler accounts, priced at $2.00/W roof,
@@ -55,12 +56,8 @@ def main():
             family=BODY, size=8.2, color=MUTE, ha="left", va="center")
 
     # ----------------------------------------------------------------- photo
-    if PHOTO_ROOF.exists():
-        ax.imshow(imread(str(PHOTO_ROOF)), extent=(L, R, 0.505, 0.690),
-                  aspect="auto", zorder=2)
-    else:
-        slot(ax, L, 0.505, R, 0.690, "PHOTOGRAPH",
-             "poultry house with roof array, landscape, 3:1")
+    shown = photo_band(ax, L, R, 0.505, 0.690, [PHOTO_ROOF] + PHOTO_GROUND,
+                       "PHOTOGRAPHS", "real installs, landscape crop")
 
     # ----------------------------------------------------------------- table
     ax.text(L, 0.470, "WHAT IT LOOKS LIKE BY FARM SIZE", family=DISPLAY,
@@ -124,9 +121,10 @@ def main():
     fig.savefig(out_pdf, facecolor=PAPER, dpi=300)
     fig.savefig(out_png, facecolor=PAPER, dpi=200)
     plt.close(fig)
-    missing = [p.name for p in (PHOTO_ROOF,) if not p.exists()]
-    if missing:
-        print(f"placeholder slots still open: {', '.join(missing)}")
+    if not shown:
+        print("no photos found in assets/; placeholder slot rendered")
+    else:
+        print(f"{shown} photo(s) placed")
     print(f"wrote {out_pdf} and {out_png}")
 
 
