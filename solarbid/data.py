@@ -11,6 +11,11 @@ from .config import CAFO_DATASET_URL, CAFO_IMAGERY_ERA, CAFO_DATASET_VINTAGE
 
 DEFAULT_CACHE = Path(os.environ.get("SOLARBID_CACHE", "./data")).expanduser()
 
+# A pre-clipped extract covering only the Peco draw area. Small enough to live
+# in the repo, which removes the 128 MB download and the network dependency
+# from every run after the first. Produced by scripts/clip_to_aoi.py.
+AOI_EXTRACT_PATH = DEFAULT_CACHE / "peco_aoi_barns.gpkg"
+
 
 class DatasetUnavailable(RuntimeError):
     """Raised when the source dataset cannot be retrieved."""
@@ -19,6 +24,18 @@ class DatasetUnavailable(RuntimeError):
 def dataset_path(cache_dir: Path | None = None) -> Path:
     cache = Path(cache_dir or DEFAULT_CACHE)
     return cache / "full-usa-3-13-2021_filtered_deduplicated.gpkg"
+
+
+def resolve_barn_source(cache_dir: Path | None = None) -> tuple[Path, bool]:
+    """Find barn polygons, preferring a committed AOI extract over a download.
+
+    Returns (path, is_preclipped). The extract already covers the AOI, so
+    callers can skip the spatial filter when the flag is set.
+    """
+    extract = AOI_EXTRACT_PATH if cache_dir is None else Path(cache_dir) / "peco_aoi_barns.gpkg"
+    if extract.exists() and extract.stat().st_size > 0:
+        return extract, True
+    return ensure_dataset(cache_dir), False
 
 
 def ensure_dataset(cache_dir: Path | None = None, url: str = CAFO_DATASET_URL) -> Path:
@@ -42,9 +59,13 @@ def ensure_dataset(cache_dir: Path | None = None, url: str = CAFO_DATASET_URL) -
         if target.exists():
             target.unlink()
         raise DatasetUnavailable(
-            f"Could not download {url}: {exc}\n"
-            f"If this is a 403 from an egress proxy, the host is blocked by policy. "
-            f"Allowlist it or place the .gpkg at {target} manually."
+            f"Could not download {url}: {exc}\n\n"
+            "A 403 here means the host is blocked by an egress policy, not that the "
+            "network is down. Three ways forward:\n"
+            f"  1. Drop the file at {target} manually.\n"
+            "  2. Run scripts/clip_to_aoi.py somewhere with access, then commit the "
+            f"small extract to {AOI_EXTRACT_PATH} -- after that no download is needed.\n"
+            "  3. Allowlist researchlabwuopendata.blob.core.windows.net."
         ) from exc
 
     return target

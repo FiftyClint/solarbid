@@ -76,7 +76,7 @@ def main() -> int:
     assumptions = Assumptions()
 
     try:
-        gpkg = data.ensure_dataset(args.cache)
+        gpkg, preclipped = data.resolve_barn_source(args.cache)
     except data.DatasetUnavailable as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
@@ -84,9 +84,12 @@ def main() -> int:
     prov = data.provenance()
     print(f"Source: {prov['source']}")
     print(f"  generated {prov['generated']} from {prov['imagery']}")
+    if preclipped:
+        print(f"  using committed AOI extract: {gpkg}")
     print("  Houses built after the imagery date are absent; counts are a floor.\n")
 
-    aoi = sites.build_aoi(PECO_POCAHONTAS, args.radius)
+    # The committed extract is already clipped, so re-masking it is wasted work.
+    aoi = None if preclipped else sites.build_aoi(PECO_POCAHONTAS, args.radius)
     barns = sites.load_barns(str(gpkg), aoi)
     print(f"Detections within {args.radius:.0f} mi of Pocahontas: {len(barns):,}")
 

@@ -1,6 +1,10 @@
-data/
+# Cache the 128 MB national dataset here, but keep the small AOI extract:
+# git will not descend into an ignored directory, so exclude the contents
+# rather than the directory itself for the negation below to work.
+data/*
+!data/peco_aoi_barns.gpkg
+
 out/
 __pycache__/
 *.pyc
 .pytest_cache/
-*.gpkg

@@ -9,28 +9,40 @@ with an honest uncertainty band attached.
 
 ## Status
 
-The site-finding, load and sizing logic is implemented and tested. The barn
-polygon dataset has **not** been ingested yet — see [Blocked](#blocked).
+The site-finding, load, sizing, incentive and quoting logic is implemented and
+tested. The barn polygon dataset has **not** been ingested yet — see
+[Getting the barn data in](#getting-the-barn-data-in).
 
 ```bash
 pip install -r requirements.txt
 python -m pytest tests/          # 51 passing, synthetic geometry
-python scripts/run_spike.py      # needs the dataset (see below)
+python scripts/clip_to_aoi.py    # one-time: build the committable AOI extract
+python scripts/run_spike.py      # count farms, size systems, price them
 ```
 
-## Blocked
+## Getting the barn data in
 
-`scripts/run_spike.py` needs the Microsoft `poultry-cafos` national predictions
-(128 MB GeoPackage, 360,857 barn polygons):
+The pipeline needs the Microsoft `poultry-cafos` national predictions (128 MB
+GeoPackage, 360,857 polygons). That host is refused by some managed egress
+policies with a `403 to CONNECT` — a policy denial, not a network fault.
 
+**The durable fix is to commit a clipped extract**, so the download happens once
+and never again. On any machine with normal internet:
+
+```bash
+git clone https://github.com/FiftyClint/solarbid.git && cd solarbid
+pip install -r requirements.txt
+python scripts/clip_to_aoi.py          # downloads, clips to the Peco AOI
+git add data/peco_aoi_barns.gpkg
+git commit -m "Add Peco AOI barn extract" && git push
 ```
-https://researchlabwuopendata.blob.core.windows.net/poultry-cafo/full-usa-3-13-2021_filtered_deduplicated.gpkg
-```
 
-That host is currently refused by the egress proxy at the policy layer
-(`403 to CONNECT`, not a network fault). Either allowlist
-`researchlabwuopendata.blob.core.windows.net`, or download the file
-out-of-band and drop it in `./data/`. Everything downstream then runs.
+`resolve_barn_source()` prefers that extract whenever it exists, so every later
+run — anywhere, including restricted environments — needs no network at all.
+
+Two alternatives: drop the national `.gpkg` in `./data/` by hand, or allowlist
+`researchlabwuopendata.blob.core.windows.net` in the environment's network
+policy.
 
 ## How it works
 
