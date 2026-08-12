@@ -24,8 +24,8 @@ from matplotlib.image import imread  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
 
 from brand import (  # noqa: E402
-    ADDRESS, BRAND, Flow, INK, L, LOGO_PATH, MUTE, PAGE_H, PAGE_W, PANEL,
-    PAPER, PHONE, R, RULE_C, WEB,
+    ADDRESS, BRAND, EMAIL, Flow, INK, L, LOGO_PATH, MUTE, PAGE_H, PAGE_W,
+    PANEL, PAPER, PHONE, R, RULE_C, WEB,
 )
 
 HEAD = "Work Sans"
@@ -140,18 +140,18 @@ def main():
 
     # ---------------------------------------------------------- the handoff
     section_head(flow, "→", "Here is what that might look like on your farm")
-    flow.text("The sheet with this one runs the numbers at two, four and six "
-              "houses: cost, credit, savings and payback. Those figures come "
-              "from metered usage on 76 broiler farms around here.",
+    flow.text("The sheet with this one runs the numbers at three, four, and five "
+              "to six houses: cost, credit, savings and payback. Those figures "
+              "come from metered usage on 76 broiler farms around here.",
               SERIF, 9.5, leading=1.48)
 
     print(f"content ends at y={flow.y:.3f}")
 
     # ---------------------------------------------------------------- footer
     ax.plot([L, R], [0.062, 0.062], color=RULE_C, lw=0.7)
-    ax.text(L, 0.040, "Send twelve months of billing history and we will start "
-            "at step one.", family=SERIF, size=9.6, color=INK, ha="left",
-            va="center")
+    ax.text(L, 0.040, f"Send twelve months of billing history to {EMAIL} and we "
+            "will start at step one.", family=SERIF, size=9.6, color=INK,
+            ha="left", va="center")
     ax.text(L, 0.020, f"Cleaner Greener Future   ·   {PHONE}   ·   {WEB}   ·   "
             f"{ADDRESS}", family=HEAD, size=8.6, color=MUTE, ha="left",
             va="center")

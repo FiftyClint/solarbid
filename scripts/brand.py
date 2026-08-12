@@ -50,9 +50,8 @@ RULE_C = "#CFDCE8"
 PHONE = "913-349-6586"        # from public listing; confirm before printing
 ADDRESS = "8595 College Blvd, Suite 150L, Overland Park, KS 66210"
 WEB = "cleanergreenerfuture.com"
-# Where growers send their bills. Confirm this is the right inbox before
-# printing: 222 growers emailing a personal address may want a dedicated alias.
-EMAIL = "clint@cgf.solutions"
+# Where growers send their bills. Confirmed by Clint 2026-08-12.
+EMAIL = "info@cgf.solutions"
 
 ASSETS = Path("assets")
 LOGO_PATH = ASSETS / "cgf_logo.png"

@@ -20,8 +20,8 @@ he has read a word about what we actually do.
 > A [N]-house farm around here runs about [X] kWh a year. Most of that is fans.
 >
 > I read power bills for a living. Rate class, meter multipliers, demand
-> charges, sales tax. Send me 12 months of yours and I will tell you what I
-> find. No charge, no obligation.
+> charges, sales tax. Send 12 months of yours to info@cgf.solutions and I
+> will tell you what I find. No charge, no obligation.
 >
 > The sheets explain the rest.
 >
@@ -49,8 +49,8 @@ worth quoting them. Open on the bill instead of the number.
 > I read power bills for a living. Rate class, meter multipliers, demand
 > charges, sales tax. On a poultry farm they are worth reading.
 >
-> Send me 12 months of yours and I will tell you what I find. No charge, no
-> obligation.
+> Send 12 months of yours to info@cgf.solutions and I will tell you what I
+> find. No charge, no obligation.
 >
 > The sheets explain the rest.
 >
