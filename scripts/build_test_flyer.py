@@ -46,21 +46,22 @@ COL2_X = L + COL_W + GUTTER
 # the same way as the mailer table. Regenerate with scripts/segment_table.py
 # style rollup if the workbook changes.
 LEFT_COPY = [
-    ("head", "What the meters showed"),
-    ("body", "A single egg house in this area used a median of 112,368 "
-             "kilowatt-hours last year. A two-house broiler farm down the road "
-             "used 92,640. One building, drawing more power than two."),
-    ("body", "At twelve cents that is roughly $13,500 a year to keep one house "
-             "running. Across the 88 layer, pullet and breeder farms we looked "
-             "at, it comes to 12.3 million kilowatt-hours."),
-    ("head", "The part worth your attention"),
-    ("body", "Those farms cluster. The middle half of them fall between 89,832 "
-             "and 138,000 kilowatt-hours a year. That is a narrow band for "
-             "buildings of different ages, put up by different people, running "
-             "different birds."),
-    ("body", "When usage clusters that tightly, a farm sitting above the band "
-             "is usually not a different kind of farm. It is the same kind of "
-             "farm with something wrong."),
+    ("head", "Where most farms land"),
+    ("body", "Metered usage on the 88 layer, pullet and breeder farms in this "
+             "area puts the middle half between 89,832 and 138,000 "
+             "kilowatt-hours a year. The median house runs 112,368."),
+    ("body", "That is a narrow band for buildings of different ages, put up by "
+             "different people, running different birds. Pull your last twelve "
+             "bills and add up the kilowatt-hours. You will know in ten minutes "
+             "whether you sit inside it."),
+    ("head", "If you are above the band"),
+    ("body", "A farm sitting above a cluster that tight is usually not a "
+             "different kind of farm. It is the same kind of farm with "
+             "something wrong, and the something is more often on the bill than "
+             "in the barn."),
+    ("body", "Look at the demand line while you are in there. The median on "
+             "these farms is 31 kilowatts. A house billed well above that in a "
+             "month when nothing on the farm changed is worth a question."),
 ]
 
 RIGHT_COPY = [
@@ -115,12 +116,13 @@ def main():
     # chance to earn the read.
     flow = Flow(fig, ax, 0.955)
 
-    flow.text("One egg house here uses more power than a two-house broiler "
-              "farm.", SERIF, 24, weight="bold", leading=1.16, gap_after=0.012)
-    flow.text("We studied a year of metered usage on 176 poultry farms in "
-              "Randolph and Clay counties. Here is what the numbers said, and "
-              "what they may be worth to you.", SERIF, 11.8, color=MUTE,
-              leading=1.40, gap_after=0.010)
+    flow.text("About $13,500 a year to run one egg house. How much of that "
+              "is a billing mistake?", SERIF, 24, weight="bold", leading=1.16,
+              gap_after=0.012)
+    flow.text("A year of metered usage on 176 poultry farms in Randolph and "
+              "Clay counties shows where a house like yours should sit. If "
+              "yours sits above it, the reason is usually on paper.",
+              SERIF, 11.8, color=MUTE, leading=1.40, gap_after=0.010)
 
     ax.plot([L, R], [flow.y, flow.y], color=INK, lw=1.4, solid_capstyle="butt")
     flow.gap(0.004)
