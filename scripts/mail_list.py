@@ -54,6 +54,7 @@ def main() -> int:
 
     roll = grp.agg(
         name=("Name", "first"),
+        mail_address=("Address", "first"),
         service_address=("Service Address", "first"),
         city=("City", "first"),
         state=("State", "first"),
@@ -70,8 +71,11 @@ def main() -> int:
     review = roll[~agree.reindex(roll.index).fillna(True)].copy()
 
     OUT.mkdir(exist_ok=True)
-    cols = ["name", "service_address", "city", "state", "zip_code", "district",
-            "houses", "meters", "annualized_kwh", "sheet_row"]
+    # mail_address is where the letter goes. service_address is where the houses
+    # are, and for 3 of these farms they are in different states.
+    cols = ["name", "mail_address", "city", "state", "zip_code",
+            "service_address", "district", "houses", "meters",
+            "annualized_kwh", "sheet_row"]
     clean.sort_values(["houses", "name"])[cols].to_csv(OUT / "mail_list.csv",
                                                        index=False)
     review.to_csv(OUT / "mail_list_review.csv", index=False)
