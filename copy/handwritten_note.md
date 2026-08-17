@@ -1,13 +1,13 @@
 # Handwritten note
 
-The third piece in the envelope, with the how-we-work sheet and the solar sheet.
+Goes in the envelope with the mailer, one sheet printed front and back.
 Written to be copied by hand 79 times, so it is short on purpose.
 
 Two variables per note, both derivable from `out/mail_list.csv`: the grower's
 first name and his house count. Everything else is the same on every card.
 
 **Solar is not mentioned.** It is the fifth thing we do and the example on the
-second sheet, not the reason for the envelope. A handwritten note that opens
+back of the sheet, not the reason for the envelope. A handwritten note that opens
 with solar is a solar note, and it tells him we are an equipment company before
 he has read a word about what we actually do.
 
@@ -23,7 +23,7 @@ he has read a word about what we actually do.
 > charges, sales tax. Send 12 months of yours to info@cgf.solutions and I
 > will tell you what I find. No charge, no obligation.
 >
-> The sheets explain the rest.
+> The sheet explains the rest.
 >
 > Clint
 
@@ -52,7 +52,7 @@ worth quoting them. Open on the bill instead of the number.
 > Send 12 months of yours to info@cgf.solutions and I will tell you what I
 > find. No charge, no obligation.
 >
-> The sheets explain the rest.
+> The sheet explains the rest.
 >
 > Clint
 
@@ -68,5 +68,5 @@ experience.
 Then one ask, and it is the cheapest one we have. Twelve months of billing costs
 him an email and can end with us telling him there is nothing here.
 
-No solar, no savings figure, no deadline. Those are on the sheets, where a
+No solar, no savings figure, no deadline. Those are on the sheet, where a
 grower who wants them will find them.

@@ -101,7 +101,8 @@ def new_page():
     return fig, ax
 
 
-def main():
+def build():
+    """Return the figure. Page 1 of the mailer, and printable on its own."""
     fig, ax = new_page()
     flow = Flow(fig, ax, 0.930)
 
@@ -140,7 +141,7 @@ def main():
 
     # ---------------------------------------------------------- the handoff
     section_head(flow, "→", "Here is what that might look like on your farm")
-    flow.text("The sheet with this one runs the numbers at three, four, and five "
+    flow.text("The back of this page runs the numbers at three, four, and five "
               "to six houses: cost, credit, savings and payback. Those figures "
               "come from metered usage on 76 broiler farms around here.",
               SERIF, 9.5, leading=1.48)
@@ -156,14 +157,14 @@ def main():
             f"{ADDRESS}", family=HEAD, size=8.6, color=MUTE, ha="left",
             va="center")
 
-    out_pdf = Path("out/cgf_how_we_work.pdf")
-    with PdfPages(out_pdf) as pdf:
-        pdf.savefig(fig, facecolor=PAPER)
+    return fig
+
+
+def main():
+    fig = build()
     fig.savefig("out/cgf_how_we_work.png", facecolor=PAPER, dpi=200)
     plt.close(fig)
-    print(f"wrote {out_pdf}")
-    print("CONFIRM BEFORE PRINTING: the billing error types named in step 1, "
-          "and the Newell Coach figures.")
+    print("wrote out/cgf_how_we_work.png")
 
 
 if __name__ == "__main__":

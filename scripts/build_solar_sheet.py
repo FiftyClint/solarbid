@@ -57,7 +57,8 @@ def section_head(flow, title):
     flow.gap(0.001)
 
 
-def main():
+def build():
+    """Return the figure. Page 2 of the mailer, and printable on its own."""
     fig = plt.figure(figsize=(PAGE_W, PAGE_H), dpi=300)
     fig.patch.set_facecolor(PAPER)
     ax = fig.add_axes([0, 0, 1, 1])
@@ -181,11 +182,14 @@ def main():
     foot.text(ADDRESS, HEAD, 8.2, color=MUTE)
     print(f"footer ends at y={foot.y:.3f}")
 
-    out_pdf = Path("out/cgf_solar_sheet.pdf")
-    fig.savefig(out_pdf, facecolor=PAPER, dpi=300)
+    return fig
+
+
+def main():
+    fig = build()
     fig.savefig("out/cgf_solar_sheet.png", facecolor=PAPER, dpi=200)
     plt.close(fig)
-    print(f"wrote {out_pdf}")
+    print("wrote out/cgf_solar_sheet.png")
 
 
 if __name__ == "__main__":
