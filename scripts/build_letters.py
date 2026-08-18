@@ -19,6 +19,7 @@ gitignored.
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -38,12 +39,11 @@ HEAD = "Work Sans"
 SERIF = "IBM Plex Serif"
 MONO = "Geist Mono"
 
-MAIL_LIST = Path("out/mail_list.csv")
-OUT = Path("out/letters_to_copy.pdf")
-
-# Round figures, matching copy/handwritten_note.md.
-KWH_BY_ROW = {"3 houses": "230,000", "4 houses": "250,000",
-              "5-6 houses": "330,000"}
+CELLS = {
+    "broiler": (Path("out/mail_list.csv"), Path("out/letters_to_copy.pdf")),
+    "flyer": (Path("out/mail_list_flyer.csv"),
+              Path("out/letters_to_copy_flyer.pdf")),
+}
 
 # Positive evidence, not absence of evidence. An earlier version greeted a farm
 # called AR ORIGINS as "Hi Ar," because ORIGINS was not on a business-word list.
@@ -146,6 +146,19 @@ def parse_first_name(raw: str) -> tuple[str, bool]:
     return first.title(), True
 
 
+def split_care_of(address: str) -> list[str]:
+    """Ten of these go care of somebody, with the street run onto the same line.
+
+    Splits at the house number so the c/o sits on its own line, the way it has
+    to be written on an envelope.
+    """
+    s = str(address).strip()
+    if not s.upper().startswith("C/O"):
+        return [s]
+    m = re.search(r"\s(?=\d)", s)
+    return [s[:m.start()].strip(), s[m.start():].strip()] if m else [s]
+
+
 def title_case_address(s: str) -> str:
     """Billing files are all caps. Handwriting them back in caps looks like a
     bill, which is the opposite of the point."""
@@ -157,31 +170,56 @@ def title_case_address(s: str) -> str:
         elif any(c.isdigit() for c in word):
             out.append(word.upper())
         else:
-            out.append(word.title())
+            # .title() gives Mcilroy and O'brien. Somebody reading their own
+            # name in ink notices that.
+            w = word.title()
+            w = re.sub(r"^(Mc|Mac)([a-z])", lambda m: m[1] + m[2].upper(), w)
+            w = re.sub(r"^O'([a-z])", lambda m: "O'" + m[1].upper(), w)
+            out.append(w)
     return " ".join(out)
 
 
-def letter_text(salutation: str, houses: float, sheet_row: str) -> list[str]:
+def opener(row) -> str:
+    """First line of the letter, in the reader's own numbers.
+
+    "Most of that is fans" stays on the broiler letters only. Ventilation is
+    about 88% of a broiler house's load and I have a source for that. Layer and
+    pullet houses carry lighting, belts and augers on top of ventilation, and I
+    have no split I can stand behind, so those letters do not make the claim.
+    """
+    kwh = str(row.get("note_kwh") or "").strip()
+    if not kwh:
+        # Segments under ten farms have no median worth quoting. Open on the
+        # bill instead of on a number we would be inventing.
+        return ("I read power bills for a living. Rate class, meter "
+                "multipliers, demand charges, sales tax. On a poultry farm "
+                "they are worth reading.")
+
+    houses = int(row["houses"])
+    bird = str(row["bird_type"]).strip().upper()
+    if bird == "BROILER":
+        return (f"A {houses}-house farm around here runs about {kwh} kWh a "
+                "year. Most of that is fans.")
+    label = {"EGG": "egg", "PULLET": "pullet", "BREEDER": "breeder"}.get(
+        bird, "poultry")
+    if houses == 1:
+        return f"A single {label} house around here runs about {kwh} kWh a year."
+    return (f"A {houses}-house {label} farm around here runs about {kwh} kWh "
+            "a year.")
+
+
+def letter_text(salutation: str, row) -> list[str]:
     greet = f"Hi {salutation}," if salutation else "Hi,"
-    kwh = KWH_BY_ROW.get(sheet_row)
-    if kwh:
-        opener = (f"A {int(houses)}-house farm around here runs about {kwh} kWh "
-                  "a year. Most of that is fans.")
+    first = opener(row)
+    if str(row.get("note_kwh") or "").strip():
+        second = ("I read power bills for a living. Rate class, meter "
+                  "multipliers, demand charges, sales tax. Send 12 months of "
+                  f"yours to {EMAIL} and I will tell you what I find. No "
+                  "charge, no obligation.")
     else:
-        # The two-house farms have no median worth quoting. Same note, opened on
-        # the bill instead of the number.
-        opener = ("I read power bills for a living. Rate class, meter "
-                  "multipliers, demand charges, sales tax. On a poultry farm "
-                  "they are worth reading.")
-    if kwh:
-        body = ("I read power bills for a living. Rate class, meter "
-                "multipliers, demand charges, sales tax. Send 12 months of "
-                f"yours to {EMAIL} and I will tell you what I find. No charge, "
-                "no obligation.")
-    else:
-        body = (f"Send 12 months of yours to {EMAIL} and I will tell you what I "
-                "find. No charge, no obligation.")
-    return [greet, opener, body, "The sheet explains the rest.", "Clint"]
+        second = (f"Send 12 months of yours to {EMAIL} and I will tell you what "
+                  "I find. No charge, no obligation.")
+    return [greet, first, second, "The sheet explains the rest.", "Clint"]
 
 
 def page(pdf, row, index, total):
@@ -200,8 +238,9 @@ def page(pdf, row, index, total):
                            edgecolor=MUTE, lw=0.9))
     ax.text(L + 0.030, 0.9575, f"{index} of {total}", family=MONO, size=9,
             color=MUTE, ha="left", va="center")
-    ax.text(R, 0.9575, f"{int(row['houses'])} houses", family=MONO, size=9,
-            color=MUTE, ha="right", va="center")
+    n = int(row["houses"])
+    ax.text(R, 0.9575, f"{n} house" + ("s" if n != 1 else ""), family=MONO,
+            size=9, color=MUTE, ha="right", va="center")
     ax.plot([L, R], [0.934, 0.934], color=INK, lw=1.2)
 
     flow = Flow(fig, ax, 0.905)
@@ -218,8 +257,7 @@ def page(pdf, row, index, total):
                   "first name. Greeting stays Hi, unless you know the grower.",
                   MONO, 8.2, color=MUTE, leading=1.45, gap_after=0.014)
 
-    for i, para in enumerate(letter_text(salutation, row["houses"],
-                                         row["sheet_row"])):
+    for i, para in enumerate(letter_text(salutation, row)):
         flow.text(para, SERIF, 14, leading=1.55,
                   gap_after=0.020 if i < 4 else 0.0)
 
@@ -234,8 +272,9 @@ def page(pdf, row, index, total):
     inner = Flow(fig, ax, box_top - 0.030, x0=L + 0.040, x1=R - 0.040)
     inner.text(title_case_address(row["name"]), SERIF, 15, leading=1.45,
                gap_after=0.004)
-    inner.text(title_case_address(row["mail_address"]), SERIF, 15, leading=1.45,
-               gap_after=0.004)
+    for line in split_care_of(row["mail_address"]):
+        inner.text(title_case_address(line), SERIF, 15, leading=1.45,
+                   gap_after=0.004)
     inner.text(f"{title_case_address(row['city'])}, "
                f"{str(row['state']).strip().upper()} "
                f"{str(row['zip_code']).strip()}", SERIF, 15, leading=1.45)
@@ -254,29 +293,32 @@ def page(pdf, row, index, total):
 
 
 def main() -> int:
-    if not MAIL_LIST.exists():
-        print(f"ERROR: {MAIL_LIST} not found. Run scripts/mail_list.py first.",
+    cell = sys.argv[1] if len(sys.argv) > 1 else "broiler"
+    if cell not in CELLS:
+        print(f"ERROR: cell must be one of {sorted(CELLS)}", file=sys.stderr)
+        return 1
+    src, out = CELLS[cell]
+    if not src.exists():
+        print(f"ERROR: {src} not found. Run scripts/mail_list.py first.",
               file=sys.stderr)
         return 1
 
-    df = pd.read_csv(MAIL_LIST)
-    # Write the biggest farms first. If the stack never gets finished, the ones
-    # that did get done are the ones worth the most.
+    df = pd.read_csv(src)
+    # Largest farm first. If the stack never gets finished, the letters that did
+    # get written are the ones worth the most.
     df = df.sort_values("annualized_kwh", ascending=False).reset_index(drop=True)
 
-    unsure = 0
-    with PdfPages(OUT) as pdf:
+    counts = {"person": 0, "business": 0, "unknown": 0}
+    with PdfPages(out) as pdf:
         for i, row in df.iterrows():
-            if page(pdf, row, i + 1, len(df)) == "unknown":
-                unsure += 1
+            counts[page(pdf, row, i + 1, len(df))] += 1
 
-    print(f"wrote {OUT}: {len(df)} letters, ordered largest farm first")
-    print(f"names needing a look before writing: {unsure}")
-    print(f"greeted by first name: "
-          f"{sum(1 for _, r in df.iterrows() if classify(r['name'])[1] == 'person')}")
-    print(f"business names, greeting stays 'Hi,': "
-          f"{sum(1 for _, r in df.iterrows() if classify(r['name'])[1] == 'business')}")
-    print(f"out-of-state envelopes: "
+    print(f"wrote {out}: {len(df)} letters, largest farm first")
+    print(f"  greeted by first name:            {counts['person']}")
+    print(f"  entity, greeting stays 'Hi,':     {counts['business']}")
+    print(f"  flagged in red for a human:       {counts['unknown']}")
+    print(f"  letters opening on the bill:      {(df.note_kwh.isna()).sum()}")
+    print(f"  out-of-state envelopes:           "
           f"{(df.state.astype(str).str.strip() != 'AR').sum()}")
     print("Personal data. out/ is gitignored; keep it off the repo.")
     return 0
