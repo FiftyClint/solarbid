@@ -15,20 +15,43 @@ single sided.
 
 ---
 
+## What it actually costs
+
+The job is 244 colour sides, not 165 prints. The mailer is duplex, so each
+broiler sheet is two.
+
+| | per side | total |
+|---|---|---|
+| retail counter (FedEx, Staples, UPS Store) | $1.00 | $244 |
+| retail, negotiated at volume | $0.60 | $146 |
+| online short run, 3 to 7 days | ~$0.35 | ~$85 |
+| in-house colour laser, consumables only | ~$0.10 | ~$24 |
+
+Add envelopes, blank cards and 165 stamps, and the whole campaign lands
+somewhere between $250 and $450 depending on which row you pick. Check the
+current first-class rate rather than trusting a number from here.
+
 ## Recommendation
 
-**Print it locally, or in the office.** At 165 sheets this is below the volume
-where a commercial run pays for itself. Online printers price short colour runs
-around setup and shipping rather than around the paper, so the per-piece cost
-lands well above an office laser, and you wait days for the privilege. There is
-also a real advantage to keeping it in the building: if the flyer test says
-something after two weeks, you want to reprint 50 more the same afternoon.
+**Both pieces are static.** Every broiler mailer is identical to every other
+broiler mailer, and every flyer is identical to every other flyer. All the
+personalization is in the handwriting. That matters because it is exactly the
+job short-run printing is cheap at: two SKUs, no variable data, no proofs per
+record.
 
-The one thing worth paying for is stock. Everything else about this mailer says
-a person did it by hand. A handwritten card next to 20lb copy paper says
-otherwise, and the copy paper is the thing that gets believed.
+So: **if there is a colour laser in the Overland Park office, run it there.**
+About $24 of toner, and a reprint after the flyer test is an afternoon.
 
----
+If there is not, **order both pieces from an online short-run printer**, not
+from the counter. The counter is the $244 option and it buys nothing here except
+same-day, which this campaign does not need. Handwriting 165 letters is the long
+pole, not printing.
+
+**Do not optimise this line.** The spread between the cheapest and most
+expensive route is about $220 across 165 growers. One four-house farm converting
+is a $315,000 project. Spending an afternoon shaving print cost is the worst
+paid work available in this campaign. Pick a route, order the good stock, and
+put the time into the letters.
 
 ## Specification
 
