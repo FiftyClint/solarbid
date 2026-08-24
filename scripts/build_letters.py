@@ -182,47 +182,75 @@ def title_case_address(s: str) -> str:
     return " ".join(out)
 
 
+def note_kwh(row) -> str:
+    """The farm's figure, or "" where its segment was too thin to quote.
+
+    A blank cell arrives from pandas as float NaN, and NaN is truthy, so
+    `str(row.get("note_kwh") or "")` yields the string "nan" and every guard
+    against it passes. That put "about nan kWh" into 23 letters.
+    """
+    value = row.get("note_kwh")
+    if value is None or pd.isna(value):
+        return ""
+    text = str(value).strip()
+    return "" if text.lower() == "nan" else text
+
+
 def opener(row) -> str:
-    """First line of the letter, in the reader's own numbers.
+    """The line that says why this letter exists.
+
+    An earlier version opened on the farm's own number as a bare fact. That
+    reads as mail-merge, because it is: 48 of the broiler farms are four-house
+    and every one of them gets 250,000. Two neighbours comparing letters would
+    see the same sentence and the same figure and know exactly what it was.
+
+    Saying up front that the number came from going through 176 farms fixes
+    that. It is true, it is the reason he is being written to at all, and it
+    makes an identical letter next door confirm the story instead of exposing
+    it.
 
     "Most of that is fans" stays on the broiler letters only. Ventilation is
-    about 88% of a broiler house's load and I have a source for that. Layer and
-    pullet houses carry lighting, belts and augers on top of ventilation, and I
-    have no split I can stand behind, so those letters do not make the claim.
+    about 88% of a broiler house's load and there is a source for that. Layer
+    and pullet houses carry lighting, belts and augers on top, and there is no
+    split here worth standing behind.
     """
-    kwh = str(row.get("note_kwh") or "").strip()
+    lead = ("I went through a year of power usage on 176 poultry farms around "
+            "Randolph and Clay counties.")
+    kwh = note_kwh(row)
     if not kwh:
-        # Segments under ten farms have no median worth quoting. Open on the
-        # bill instead of on a number we would be inventing.
-        return ("I read power bills for a living. Rate class, meter "
-                "multipliers, demand charges, sales tax. On a poultry farm "
-                "they are worth reading.")
+        # Segments under ten farms have no median worth quoting.
+        return lead + " Yours is one I could not get a clean read on."
 
     houses = int(row["houses"])
     bird = str(row["bird_type"]).strip().upper()
     if bird == "BROILER":
-        return (f"A {houses}-house farm around here runs about {kwh} kWh a "
-                "year. Most of that is fans.")
+        return (f"{lead} A {houses}-house farm runs about {kwh} kWh. Most of "
+                "that is fans.")
     label = {"EGG": "egg", "PULLET": "pullet", "BREEDER": "breeder"}.get(
         bird, "poultry")
     if houses == 1:
-        return f"A single {label} house around here runs about {kwh} kWh a year."
-    return (f"A {houses}-house {label} farm around here runs about {kwh} kWh "
-            "a year.")
+        return f"{lead} A single {label} house runs about {kwh} kWh."
+    return f"{lead} A {houses}-house {label} farm runs about {kwh} kWh."
 
 
 def letter_text(salutation: str, row) -> list[str]:
+    """Four short paragraphs: why I am writing, what I cannot tell, the ask.
+
+    The turn is the second paragraph. Naming the limit of what the co-op data
+    shows is what earns the ask, and it is the only honest reason to want his
+    bills rather than his attention.
+    """
     greet = f"Hi {salutation}," if salutation else "Hi,"
-    first = opener(row)
-    if str(row.get("note_kwh") or "").strip():
-        second = ("I read power bills for a living. Rate class, meter "
-                  "multipliers, demand charges, sales tax. Send 12 months of "
-                  f"yours to {EMAIL} and I will tell you what I find. No "
-                  "charge, no obligation.")
-    else:
-        second = (f"Send 12 months of yours to {EMAIL} and I will tell you what "
-                  "I find. No charge, no obligation.")
-    return [greet, first, second, "The sheet explains the rest.", "Clint"]
+    subject = ("What that does not tell me" if note_kwh(row)
+               else "What the co-op data does not show")
+    return [
+        greet,
+        opener(row),
+        f"{subject} is whether you are billed right for it. Send 12 months of "
+        f"your bills to {EMAIL} and I will tell you what I find. No charge.",
+        "More in the sheet if you want it.",
+        "Clint",
+    ]
 
 
 def page(pdf, row, index, total):

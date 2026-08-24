@@ -24,13 +24,14 @@ he has read a word about what we actually do.
 
 > Hi [Name],
 >
-> A [N]-house farm around here runs about [X] kWh a year. Most of that is fans.
+> I went through a year of power usage on 176 poultry farms around Randolph and
+> Clay counties. A [N]-house farm runs about [X] kWh. Most of that is fans.
 >
-> I read power bills for a living. Rate class, meter multipliers, demand
-> charges, sales tax. Send 12 months of yours to info@cgf.solutions and I
-> will tell you what I find. No charge, no obligation.
+> What that does not tell me is whether you are billed right for it. Send 12
+> months of your bills to info@cgf.solutions and I will tell you what I find.
+> No charge.
 >
-> The sheet explains the rest.
+> More in the sheet if you want it.
 >
 > Clint
 
@@ -50,39 +51,44 @@ number at all and takes the second version below.
 "Most of that is fans" stays on the broiler letters only. Ventilation is about
 88% of a broiler house's load and there is a source for that. Layer and pullet
 houses carry lighting, belts and augers on top of ventilation, and there is no
-split here worth standing behind, so those letters leave the sentence out.
+split here worth standing behind, so those letters leave the sentence out. Layer
+letters say "A single egg house runs about 110,000 kWh" instead.
 
 ---
 
 ## Segments too thin to quote (23 farms across both cells)
 
 Three two-house broiler farms, and twenty layer, pullet and breeder farms whose
-segment holds fewer than ten. One of the two-house broilers has a bad house
-count in the co-op data. Open on the bill instead of on a number.
+segment holds fewer than ten. Same letter, with the second sentence changed.
 
-> Hi [Name],
+> I went through a year of power usage on 176 poultry farms around Randolph and
+> Clay counties. Yours is one I could not get a clean read on.
 >
-> I read power bills for a living. Rate class, meter multipliers, demand
-> charges, sales tax. On a poultry farm they are worth reading.
->
-> Send 12 months of yours to info@cgf.solutions and I will tell you what I
-> find. No charge, no obligation.
->
-> The sheet explains the rest.
->
-> Clint
+> What the co-op data does not show is whether you are billed right for it. ...
 
 ---
 
 ## Why it is written this way
 
-It opens with a number about his farm because that is the fastest way to show we
-did work before asking for anything. "Most of that is fans" is the second
-signal: it says we know poultry, in four words, without a paragraph about our
-experience.
+**It says why it exists.** An earlier draft opened on the farm's own number as
+a bare fact, then went into what we do. That reads as mail-merge, because it is:
+48 of the broiler farms are four-house and every one of them gets 250,000. Two
+neighbours comparing letters would have seen the same sentence and the same
+figure and known exactly what they were holding. Opening with where the number
+came from makes an identical letter next door confirm the story rather than
+expose it.
 
-Then one ask, and it is the cheapest one we have. Twelve months of billing costs
-him an email and can end with us telling him there is nothing here.
+**The second paragraph is the whole letter.** Naming the limit of what the
+co-op data shows is what earns the ask. We know what his farm draws and we do
+not know whether he is billed right for it, and the only way to close that gap
+is the thing we are asking him for. Without that turn the ask is just a request
+for attention.
 
-No solar, no savings figure, no deadline. Those are on the sheet, where a
-grower who wants them will find them.
+**It does not repeat the sheet.** The sheet lists what we do, in order, with
+the numbers. A handwritten note that compresses the same list into four
+sentences of jargon wastes the one thing handwriting can do that print cannot,
+which is sound like a person. "More in the sheet if you want it" hands the rest
+off and gives him permission to ignore it.
+
+**No solar, no savings figure, no deadline, and no services list.** Those are on
+the sheet, where a grower who wants them will find them.
