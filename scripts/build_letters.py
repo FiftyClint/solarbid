@@ -24,6 +24,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
@@ -34,6 +35,9 @@ from brand import (  # noqa: E402
     ADDRESS, BRAND, EMAIL, Flow, INK, L, MUTE, PAGE_H, PAGE_W, PANEL, PAPER,
     R, RULE_C,
 )
+from solarbid.config import ArkansasTariff  # noqa: E402
+
+RETAIL_RATE = ArkansasTariff().retail_rate_per_kwh
 
 HEAD = "Work Sans"
 SERIF = "IBM Plex Serif"
@@ -196,61 +200,68 @@ def note_kwh(row) -> str:
     return "" if text.lower() == "nan" else text
 
 
-def opener(row) -> str:
-    """The line that says why this letter exists.
+def dollars(kwh_text: str) -> str:
+    """The kWh figure as money, rounded to the nearest thousand.
 
-    An earlier version opened on the farm's own number as a bare fact. That
-    reads as mail-merge, because it is: 48 of the broiler farms are four-house
-    and every one of them gets 250,000. Two neighbours comparing letters would
-    see the same sentence and the same figure and know exactly what it was.
-
-    Saying up front that the number came from going through 176 farms fixes
-    that. It is true, it is the reason he is being written to at all, and it
-    makes an identical letter next door confirm the story instead of exposing
-    it.
-
-    "Most of that is fans" stays on the broiler letters only. Ventilation is
-    about 88% of a broiler house's load and there is a source for that. Layer
-    and pullet houses carry lighting, belts and augers on top, and there is no
-    split here worth standing behind.
+    250,000 kWh is a number he has to translate. $28,000 is a number he already
+    resents. Rounded because this is an estimate standing in for his bill, and a
+    figure to the dollar would claim a precision the rate does not have.
     """
-    lead = ("I went through a year of power usage on 176 poultry farms around "
-            "Randolph and Clay counties.")
+    kwh = float(kwh_text.replace(",", ""))
+    return f"${round(kwh * RETAIL_RATE / 1000) * 1000:,.0f}"
+
+
+def opener(row) -> list[str]:
+    """His money first, then where the figure came from.
+
+    Money leads because it is the thing he already feels. Provenance follows
+    immediately, in the same breath, because it is the next question he asks and
+    because it solves a problem the personalization creates: 48 of the broiler
+    farms are four-house and every one of them gets the same figure. Two
+    neighbours comparing letters see exactly what the letter says it is.
+    """
     kwh = note_kwh(row)
     if not kwh:
-        # Segments under ten farms have no median worth quoting.
-        return lead + " Yours is one I could not get a clean read on."
+        # Segments under ten farms have no median worth quoting, so there is no
+        # money line to lead with.
+        return ["I went through a year of power usage on 176 poultry farms "
+                "around Randolph and Clay counties. Yours is one I could not "
+                "get a clean read on."]
 
     houses = int(row["houses"])
+    # Spelled out: the sentence opens on this, and a numeral at the head of a
+    # handwritten line reads like a form.
+    word = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five",
+            6: "Six"}.get(houses, str(houses))
     bird = str(row["bird_type"]).strip().upper()
     if bird == "BROILER":
-        return (f"{lead} A {houses}-house farm runs about {kwh} kWh. Most of "
-                "that is fans.")
-    label = {"EGG": "egg", "PULLET": "pullet", "BREEDER": "breeder"}.get(
-        bird, "poultry")
-    if houses == 1:
-        return f"{lead} A single {label} house runs about {kwh} kWh."
-    return f"{lead} A {houses}-house {label} farm runs about {kwh} kWh."
+        subject = f"{word} houses run" if houses > 1 else "One house runs"
+    else:
+        label = {"EGG": "egg", "PULLET": "pullet",
+                 "BREEDER": "breeder"}.get(bird, "poultry")
+        subject = (f"A single {label} house runs" if houses == 1
+                   else f"{word} {label} houses run")
+    return [
+        f"{subject} about {kwh} kWh a year. At 11 cents that is around "
+        f"{dollars(kwh)}.",
+        "I know that because I went through a year of usage on 176 farms "
+        "around here.",
+    ]
 
 
 def letter_text(salutation: str, row) -> list[str]:
-    """Four short paragraphs: why I am writing, what I cannot tell, the ask.
+    """Money, provenance, the limit, the ask.
 
-    The turn is the second paragraph. Naming the limit of what the co-op data
-    shows is what earns the ask, and it is the only honest reason to want his
-    bills rather than his attention.
+    The turn is the limit. Naming what the co-op data cannot show is what earns
+    the ask, because his bills are the only thing that closes that gap.
     """
     greet = f"Hi {salutation}," if salutation else "Hi,"
-    subject = ("What that does not tell me" if note_kwh(row)
-               else "What the co-op data does not show")
-    return [
-        greet,
-        opener(row),
-        f"{subject} is whether you are billed right for it. Send 12 months of "
-        f"your bills to {EMAIL} and I will tell you what I find. No charge.",
-        "More in the sheet if you want it.",
-        "Clint",
-    ]
+    lead = opener(row)
+    body = (lead[-1] + " " if len(lead) > 1 else "") + (
+        "What I cannot see is whether you are billed right for it, or whether "
+        "there are other ways to cut what you spend. Send 12 months of your "
+        f"bills to {EMAIL} and I will tell you what I find. No charge.")
+    return [greet, lead[0], body, "More in the sheet if you want it.", "Clint"]
 
 
 def page(pdf, row, index, total):

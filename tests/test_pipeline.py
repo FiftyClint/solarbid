@@ -919,5 +919,9 @@ class TestStorage:
             tariff.retail_rate_per_kwh - tariff.export_credit_per_kwh
         )
         # Under grandfathered 1:1 net metering the spread, and the case, vanish.
-        grandfathered = ArkansasTariff(export_credit_per_kwh=0.12)
+        # Derived from the tariff rather than restated: 1:1 means exports are
+        # credited at whatever retail happens to be, so hardcoding it here made
+        # this test fail the moment the real rate replaced the placeholder.
+        grandfathered = ArkansasTariff(
+            export_credit_per_kwh=tariff.retail_rate_per_kwh)
         assert storage_arbitrage_per_kwh(grandfathered) == pytest.approx(0.0)

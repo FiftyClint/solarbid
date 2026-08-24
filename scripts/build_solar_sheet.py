@@ -33,9 +33,9 @@ MONO = "Geist Mono"
 # the workbook's grain is the meter, and a per-account median described half a
 # farm for every grower carrying two meters.
 TABLE = [
-    ("3 houses", "232,080", "140 kW", "$294,000", "$147,000", "$19,400", "4.2 yrs"),
-    ("4 houses", "247,200", "150 kW", "$315,000", "$157,500", "$20,700", "4.2 yrs"),
-    ("5-6 houses", "331,200", "200 kW", "$420,000", "$210,000", "$27,700", "4.2 yrs"),
+    ("3 houses", "232,080", "140 kW", "$294,000", "$147,000", "$17,900", "4.5 yrs"),
+    ("4 houses", "247,200", "150 kW", "$315,000", "$157,500", "$19,100", "4.5 yrs"),
+    ("5-6 houses", "331,200", "200 kW", "$420,000", "$210,000", "$25,500", "4.5 yrs"),
 ]
 COLS = ["", "kWh/year", "System", "Installed", "Federal credit", "Saves/year",
         "Payback"]

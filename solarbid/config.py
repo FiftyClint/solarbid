@@ -149,7 +149,10 @@ class ArkansasTariff:
     margin in Arkansas.
     """
 
-    retail_rate_per_kwh: float = 0.12
+    # Clint's figure for this footprint, 2026-08. Replaces the 0.12 placeholder
+    # the model started with. Treated as the effective energy rate; demand
+    # charges are handled separately below.
+    retail_rate_per_kwh: float = 0.11
     export_credit_per_kwh: float = 0.025   # avoided cost, utility-specific
     grandfathered_1to1_deadline: str = "2024-09-30"
 
