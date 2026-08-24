@@ -19,7 +19,6 @@ customer names and addresses, so it stays in out/, which is gitignored.
 from __future__ import annotations
 
 import html
-import json
 import sys
 from pathlib import Path
 
@@ -103,6 +102,9 @@ h1{font-size:19px;margin:0 0 4px}
 .track{height:7px;border-radius:4px;background:var(--rule);margin-top:8px;overflow:hidden}
 .fill{height:100%;background:var(--done);width:0;transition:width .2s}
 .tools{display:flex;flex-wrap:wrap;gap:8px;max-width:900px;margin:12px auto 0}
+/* A class selector beats the UA rule for [hidden], so say it explicitly.
+   Without scripting these controls do nothing and must not be offered. */
+.tools[hidden],.card[hidden],.empty[hidden]{display:none}
 input[type=search]{flex:1;min-width:170px;padding:8px 12px;font-size:15px;
   border:1px solid var(--rule);border-radius:7px;background:var(--paper);color:var(--ink)}
 button{padding:8px 13px;font-size:14px;border:1px solid var(--rule);border-radius:7px;
@@ -145,97 +147,105 @@ main{max-width:900px;margin:0 auto;padding:18px 20px 80px}
 """
 
 SCRIPT = """
-const ROWS = __ROWS__;
+// The cards are already in the HTML. This only adds the conveniences: saved
+// checkmarks, filtering and the counter. With scripting off the whole list is
+// still readable and every checkbox still ticks, which is what matters.
 const KEY = 'cgf-worklist-v1';
-let done = {};
-let storageOK = true;
+const cards = Array.from(document.querySelectorAll('.card'));
+let done = {}, storageOK = true;
 try { done = JSON.parse(localStorage.getItem(KEY) || '{}'); }
 catch (e) { storageOK = false; }
 
 function save() {
   if (!storageOK) return;
   try { localStorage.setItem(KEY, JSON.stringify(done)); }
-  catch (e) { storageOK = false; showWarn(); }
+  catch (e) { storageOK = false; warn(); }
 }
-function showWarn() {
+function warn() {
   if (document.getElementById('warn')) return;
   const d = document.createElement('div');
   d.id = 'warn'; d.className = 'warn';
-  d.textContent = 'This browser will not save your checkmarks between visits. '
-    + 'Keep this tab open, or ask Clint to put it online instead.';
+  d.textContent = 'This browser will not remember your checkmarks after you '
+    + 'close the page. Keep this tab open, or ask Clint to put it online.';
   document.body.insertBefore(d, document.body.firstChild);
 }
-if (!storageOK) showWarn();
+if (!storageOK) warn();
 
 let filter = 'todo', query = '';
 
-function matches(r) {
-  if (filter === 'todo' && done[r.id]) return false;
-  if (filter === 'broiler' && r.cell !== 'broiler') return false;
-  if (filter === 'flyer' && r.cell !== 'flyer') return false;
-  if (filter === 'flagged' && !r.flagged) return false;
-  if (!query) return true;
-  const hay = (r.name + ' ' + r.address.join(' ')).toLowerCase();
-  return hay.includes(query);
-}
-
-function render() {
-  const main = document.getElementById('list');
-  const shown = ROWS.filter(matches);
-  main.innerHTML = shown.length ? '' : '<p class="empty">Nothing here. '
-    + 'Try another filter.</p>';
-  for (const r of shown) {
-    const card = document.createElement('div');
-    card.className = 'card ' + r.cell + (done[r.id] ? ' done' : '');
-    card.innerHTML = `
-      <div class="top">
-        <input class="chk" type="checkbox" ${done[r.id] ? 'checked' : ''}
-               aria-label="Mark ${r.name} done">
-        <div class="who">
-          <h2>${r.name}</h2>
-          <span class="tag piece ${r.cell === 'flyer' ? 'flyer' : ''}">${r.piece}</span>
-          <span class="tag">${r.pieceNote}</span>
-          <span class="num">${r.houses} house${r.houses === 1 ? '' : 's'}</span>
-        </div>
-      </div>
-      ${r.flagged ? `<div class="flag">Check this name first. The co-op file
-        says: ${r.rawName}</div>` : ''}
-      <div class="body">
-        <div class="block"><b>Envelope</b>
-          <div class="addr">${r.address.join('<br>')}</div></div>
-        <div class="block"><b>Write this note</b>
-          <div class="note">${r.note.map(p => '<p>' + p + '</p>').join('')}</div></div>
-      </div>`;
-    card.querySelector('.chk').addEventListener('change', (e) => {
-      if (e.target.checked) done[r.id] = 1; else delete done[r.id];
-      save(); card.classList.toggle('done', !!done[r.id]); updateCount();
-      if (filter === 'todo' && done[r.id]) setTimeout(render, 220);
-    });
-    main.appendChild(card);
+function apply() {
+  let shown = 0;
+  for (const c of cards) {
+    const isDone = !!done[c.dataset.id];
+    c.classList.toggle('done', isDone);
+    let ok = true;
+    if (filter === 'todo' && isDone) ok = false;
+    if (filter === 'broiler' && c.dataset.cell !== 'broiler') ok = false;
+    if (filter === 'flyer' && c.dataset.cell !== 'flyer') ok = false;
+    if (filter === 'flagged' && c.dataset.flagged !== '1') ok = false;
+    if (ok && query && !c.dataset.search.includes(query)) ok = false;
+    c.hidden = !ok;
+    if (ok) shown++;
   }
-  updateCount();
-}
-
-function updateCount() {
-  const n = ROWS.filter(r => done[r.id]).length;
+  document.getElementById('none').hidden = shown > 0;
+  const n = cards.filter(c => done[c.dataset.id]).length;
   document.getElementById('count').textContent =
-    n + ' of ' + ROWS.length + ' done, ' + (ROWS.length - n) + ' to go';
-  document.getElementById('fill').style.width = (n / ROWS.length * 100) + '%';
+    n + ' of ' + cards.length + ' done, ' + (cards.length - n) + ' to go';
+  document.getElementById('fill').style.width = (n / cards.length * 100) + '%';
 }
 
+for (const c of cards) {
+  const box = c.querySelector('.chk');
+  box.checked = !!done[c.dataset.id];
+  box.addEventListener('change', () => {
+    if (box.checked) done[c.dataset.id] = 1; else delete done[c.dataset.id];
+    save();
+    c.classList.toggle('done', box.checked);
+    if (filter === 'todo' && box.checked) setTimeout(apply, 220); else apply();
+  });
+}
 document.querySelectorAll('[data-filter]').forEach(b => {
   b.addEventListener('click', () => {
     filter = b.dataset.filter;
     document.querySelectorAll('[data-filter]').forEach(x =>
       x.classList.toggle('on', x === b));
-    render();
+    apply();
   });
 });
 document.getElementById('q').addEventListener('input', e => {
-  query = e.target.value.trim().toLowerCase(); render();
+  query = e.target.value.trim().toLowerCase(); apply();
 });
-render();
+document.getElementById('tools').hidden = false;
+apply();
 """
+
+
+def card_html(r: dict) -> str:
+    e = html.escape
+    search = e((r["name"] + " " + " ".join(r["address"])).lower(), quote=True)
+    flag = (f'<div class="flag">Check this name first. The co-op file says: '
+            f'{e(r["rawName"])}</div>') if r["flagged"] else ""
+    note = "".join(f"<p>{e(p)}</p>" for p in r["note"])
+    addr = "<br>".join(e(l) for l in r["address"])
+    houses = f'{r["houses"]} house' + ("" if r["houses"] == 1 else "s")
+    return f"""<article class="card {r['cell']}" data-id="{e(r['id'])}"
+   data-cell="{r['cell']}" data-flagged="{'1' if r['flagged'] else '0'}"
+   data-search="{search}">
+  <div class="top">
+    <input class="chk" type="checkbox" aria-label="Mark {e(r['name'])} done">
+    <div class="who">
+      <h2>{e(r['name'])}</h2>
+      <span class="tag piece {'flyer' if r['cell'] == 'flyer' else ''}">{e(r['piece'])}</span>
+      <span class="tag">{e(r['pieceNote'])}</span>
+      <span class="num">{houses}</span>
+    </div>
+  </div>
+  {flag}
+  <div class="body">
+    <div class="block"><b>Envelope</b><div class="addr">{addr}</div></div>
+    <div class="block"><b>Write this note</b><div class="note">{note}</div></div>
+  </div>
+</article>"""
 
 
 def main() -> int:
@@ -243,6 +253,7 @@ def main() -> int:
     OUT.parent.mkdir(exist_ok=True)
 
     ret = "<br>".join(html.escape(l) for l in RETURN_ADDRESS)
+    cards = "\n".join(card_html(r) for r in rows)
     page = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -252,12 +263,12 @@ def main() -> int:
   <div class="bar">
     <div class="grow">
       <h1>Poultry mailing, {len(rows)} letters</h1>
-      <div class="count" id="count"></div>
+      <div class="count" id="count">{len(rows)} to write</div>
       <div class="track"><div class="fill" id="fill"></div></div>
     </div>
     <div class="ret"><b>Return address, every envelope</b>{ret}</div>
   </div>
-  <div class="tools">
+  <div class="tools" id="tools" hidden>
     <input id="q" type="search" placeholder="Find a name or a town">
     <button data-filter="todo" class="on">To do</button>
     <button data-filter="all">All</button>
@@ -266,8 +277,11 @@ def main() -> int:
     <button data-filter="flagged">Name to check</button>
   </div>
 </header>
-<main id="list"></main>
-<script>{SCRIPT.replace('__ROWS__', json.dumps(rows))}</script>
+<main id="list">
+{cards}
+<p class="empty" id="none" hidden>Nothing here. Try another filter.</p>
+</main>
+<script>{SCRIPT}</script>
 </body></html>"""
 
     OUT.write_text(page, encoding="utf-8")
