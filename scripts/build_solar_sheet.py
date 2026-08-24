@@ -8,6 +8,11 @@ get one line each rather than a section.
 The two lines that cost us the sale stay in. REAP is halted and Arkansas pays
 avoided cost for exports. Dropping them to save space would take out the
 reason to believe the rest.
+
+Both of those change what the grower decides. FEOC and the material assistance
+cost ratio do not, and are deliberately absent: sourcing compliance is our
+obligation to meet, not a variable he can act on, and explaining our own
+delivery risk on a first-touch piece buys nothing. Do not add it here.
 """
 
 import sys
