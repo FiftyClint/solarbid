@@ -1,34 +1,36 @@
 # Print and mail spec
 
-What to hand a printer, and what to buy. 165 envelopes total, in two cells.
+What to hand a printer, and what to buy. 135 envelopes total, in two cells.
+That is one envelope per recipient, not per farm: 165 farms belong to 135
+people, and 25 of them own more than one.
 
-| cell | farms | printed piece | pages | sheets |
+| cell | envelopes | printed piece | pages | sheets |
 |---|---|---|---|---|
-| broiler | 79 | `out/cgf_mailer.pdf` | 2, duplex | 79 |
-| flyer | 86 | `out/cgf_test_flyer.pdf` | 1, single side | 86 |
+| broiler | 58 | `out/cgf_mailer.pdf` | 2, duplex | 58 |
+| flyer | 77 | `out/cgf_test_flyer.pdf` | 1, single side | 77 |
 
-Plus 165 blank note cards and 165 envelopes, both written by hand.
+Plus 135 blank note cards and 135 envelopes, both written by hand.
 
 `out/letters_to_copy.pdf` and `out/letters_to_copy_flyer.pdf` are not mailed.
-They are the working stack she writes from, 165 pages, plain office paper,
+They are the working stack she writes from, 135 pages, plain office paper,
 single sided.
 
 ---
 
 ## What it actually costs
 
-The job is 244 colour sides, not 165 prints. The mailer is duplex, so each
+The job is 193 color sides, not 135 prints. The mailer is duplex, so each
 broiler sheet is two.
 
 | | per side | total |
 |---|---|---|
-| retail counter (FedEx, Staples, UPS Store) | $1.00 | $244 |
-| retail, negotiated at volume | $0.60 | $146 |
-| online short run, 3 to 7 days | ~$0.35 | ~$85 |
-| in-house colour laser, consumables only | ~$0.10 | ~$24 |
+| retail counter (FedEx, Staples, UPS Store) | $1.00 | $193 |
+| retail, negotiated at volume | $0.60 | $116 |
+| online short run, 3 to 7 days | ~$0.35 | ~$68 |
+| in-house colour laser, consumables only | ~$0.10 | ~$19 |
 
-Add envelopes, blank cards and 165 stamps, and the whole campaign lands
-somewhere between $250 and $450 depending on which row you pick. Check the
+Add envelopes, blank cards and 135 stamps, and the whole campaign lands
+somewhere between $200 and $350 depending on which row you pick. Check the
 current first-class rate rather than trusting a number from here.
 
 ## Recommendation
@@ -44,11 +46,11 @@ About $24 of toner, and a reprint after the flyer test is an afternoon.
 
 If there is not, **order both pieces from an online short-run printer**, not
 from the counter. The counter is the $244 option and it buys nothing here except
-same-day, which this campaign does not need. Handwriting 165 letters is the long
+same-day, which this campaign does not need. Handwriting 135 letters is the long
 pole, not printing.
 
-**Do not optimise this line.** The spread between the cheapest and most
-expensive route is about $220 across 165 growers. One four-house farm converting
+**Do not optimize this line.** The spread between the cheapest and most
+expensive route is about $175 across 135 growers. One four-house farm converting
 is a $315,000 project. Spending an afternoon shaving print cost is the worst
 paid work available in this campaign. Pick a route, order the good stock, and
 put the time into the letters.
@@ -68,19 +70,23 @@ put the time into the letters.
 
 **Note cards**
 
-- 165 blank cards, roughly 4 x 6 in, same white as the sheet if you can match it.
+- 135 blank cards, roughly 4 x 6 in, same white as the sheet if you can match it.
 - Flat correspondence cards, not folded. The note is about 55 words and a
   fold-over card leaves three empty faces, which reads as a card that ran out of
   things to say.
 
 **Envelopes**
 
-- 165 #10 (4.125 x 9.5 in). Takes the sheet folded in thirds with the card
+- 135 #10 (4.125 x 9.5 in). Takes the sheet folded in thirds with the card
   alongside.
 - Blank. Not window, not pre-printed with the logo. A logo on the envelope
   turns a handwritten letter back into direct mail before it is opened.
-- Hand-address them, including the return address. The return address is on
-  every copy sheet.
+- Hand-address them, including the return address. It is on every copy sheet
+  and on the worklist page, and it goes without the suite line:
+
+      Cleaner Greener Future
+      8595 College Blvd
+      Overland Park, KS 66210
 - **Real stamps, not a meter.** Metered postage on a hand-addressed envelope is
   the single detail that gives the whole thing away.
 
@@ -93,7 +99,7 @@ records of unknown vintage. Anything that comes back is a bad record, and
 knowing which is worth more than the stamp. That is the reason for the return
 address.
 
-**Print a proof of each piece and read it on paper before running 165.** Colour
+**Print a proof of each piece and read it on paper before running the lot.** Colour
 sits differently on uncoated stock than on screen, and the photographs on both
 pieces are the part most likely to disappoint. Check the arrays still read as
 arrays and are not a dark smear.

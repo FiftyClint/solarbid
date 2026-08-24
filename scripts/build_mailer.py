@@ -40,7 +40,6 @@ def main():
         plt.close(fig)
 
     print(f"wrote {OUT} (2 pages, print duplex on one sheet)")
-    print("CONFIRM BEFORE PRINTING: the Newell Coach figures on page 1.")
 
 
 if __name__ == "__main__":

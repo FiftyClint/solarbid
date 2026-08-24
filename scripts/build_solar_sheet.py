@@ -45,6 +45,11 @@ TABLE = [
 COLS = ["", "kWh/year", "System", "Installed", "Federal credit", "Saves/year",
         "Payback"]
 
+# The domestic content adder is printed flat rather than conditionally because
+# NEA Solar confirmed a supply path clearing the sourcing threshold (Clint,
+# 2026-08-24). Without that confirmation this line would be worth 10 points of
+# a number on the page, and the sheet would be promising 50% while delivering
+# 40%. Re-confirm if the installer or the equipment changes.
 CREDIT = [
     ("Federal investment credit, base rate", "30%"),
     ("Domestic content adder", "10%"),

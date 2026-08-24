@@ -32,7 +32,7 @@ HEAD = "Work Sans"
 SERIF = "IBM Plex Serif"
 MONO = "Geist Mono"
 
-# Public case study. Confirm against the live site before printing.
+# Public case study. Figures confirmed by Clint 2026-08-24.
 CASE = {"client": "Newell Coach", "project": 1_070_600,
         "grant": 535_800, "itc": 160_440}
 

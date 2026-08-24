@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kristen's worklist: one scrollable page, 165 farms, checked off as they go.
+"""Kristen's worklist: one scrollable page, 135 envelopes, ticked off as done.
 
 A PDF is the wrong shape for this job. She is working through a queue on a
 laptop over several sittings, so the page needs to remember where she got to,
@@ -30,8 +30,8 @@ from build_letters import (  # noqa: E402
     classify, letter_text, split_care_of, title_case_address,
 )
 
-# As Clint gave it. brand.py carries "Suite 150L" as well; confirm which one
-# belongs on the envelope before she writes 165 of them.
+# No suite line. Confirmed by Clint 2026-08-24: brand.py carries "Suite 150L"
+# for the printed sheets, but the envelope goes without it.
 RETURN_ADDRESS = ["Cleaner Greener Future", "8595 College Blvd",
                   "Overland Park, KS 66210"]
 
