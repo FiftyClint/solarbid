@@ -231,8 +231,22 @@ def opener(row) -> list[str]:
     houses = int(row["houses"])
     # Spelled out: the sentence opens on this, and a numeral at the head of a
     # handwritten line reads like a form.
-    word = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five",
-            6: "Six"}.get(houses, str(houses))
+    # Recipients who own more than one farm are written to about all of their
+    # houses, so this runs past six.
+    word = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six",
+            7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten", 11: "Eleven",
+            12: "Twelve", 13: "Thirteen", 14: "Fourteen", 15: "Fifteen",
+            16: "Sixteen", 17: "Seventeen", 18: "Eighteen", 19: "Nineteen",
+            20: "Twenty"}.get(houses)
+    if word is None:
+        # Past twenty, spelling it out is worse than not opening on the count.
+        # Restructuring keeps the numeral out of the first position.
+        return [
+            f"About {kwh} kWh a year across {houses} houses. At 11 cents that "
+            f"is around {dollars(kwh)}.",
+            "I know that because I went through a year of usage on 176 farms "
+            "around here.",
+        ]
     bird = str(row["bird_type"]).strip().upper()
     if bird == "BROILER":
         subject = f"{word} houses run" if houses > 1 else "One house runs"

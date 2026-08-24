@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-"""Mailing lists for both test cells, one row per farm.
+"""Mailing lists for both test cells, one row per envelope.
 
-The account workbook is 222 rows, but a row is a meter. Mailing off it would
-send four envelopes to one grower and none to the farms that share a name. This
-collapses to (Name, Service Address), which is the grain a letter goes to.
+The account workbook is 222 rows and a row is a meter. Two collapses stand
+between that and a mailing. Meters fold into farms on (Name, Service Address),
+which is the grain the model wants, because two farms under one name are two
+sets of houses drawing two loads. Farms then fold into recipients on (Name,
+Mailing Address, ZIP), which is the grain an envelope wants: 25 people would
+otherwise have received between two and four identical letters on the same day.
+
+222 meters, 165 farms, 135 envelopes.
 
 Two cells go out, and the handwritten note is held constant across both so that
 the only thing varying is the printed piece:
 
-    broiler     79 farms   two-page mailer, printed duplex
-    flyer       86 farms   one-page Ogilvy-register flyer
+    broiler     58 envelopes   two-page mailer, printed duplex
+    flyer       77 envelopes   one-page Ogilvy-register flyer
 
 Segment still differs between the cells, which the flyer cannot control for. It
 tells you whether the second register pulls at all, not that it beats the first.
@@ -80,6 +85,52 @@ def round_kwh(value: float) -> str:
     return f"{round(value / 10_000) * 10_000:,.0f}"
 
 
+def collapse_to_recipients(farms: pd.DataFrame) -> pd.DataFrame:
+    """One row per envelope, not per farm.
+
+    (Name, Service Address) is the right grain for the model, because two farms
+    under one name are two sets of houses drawing two loads. It is the wrong
+    grain for a mailbox: 25 people would have received between two and four
+    identical envelopes on the same day, which is the fastest way to look like
+    junk mail after going to the trouble of writing by hand.
+
+    Houses and the segment medians add across a person's farms, so a grower with
+    two four-house farms is written to about eight houses and the whole bill,
+    which is both truer to his position and a larger number than either farm on
+    its own. Where any one of his farms sits in a segment too thin to quote, the
+    total would be short by an unknown amount, so he takes the version of the
+    note that opens without a figure.
+    """
+    farms = farms.copy()
+    farms["recipient"] = (
+        farms.name.astype(str).str.strip().str.upper() + "|"
+        + farms.mail_address.astype(str).str.strip().str.upper() + "|"
+        + farms.zip_code.astype(str).str.strip())
+
+    grouped = farms.groupby("recipient", sort=False)
+    out = grouped.agg(
+        name=("name", "first"),
+        mail_address=("mail_address", "first"),
+        city=("city", "first"),
+        state=("state", "first"),
+        zip_code=("zip_code", "first"),
+        service_address=("service_address", "first"),
+        district=("district", "first"),
+        bird_type=("bird_type", "first"),
+        houses=("houses", "sum"),
+        farms=("name", "size"),
+        meters=("meters", "sum"),
+        annualized_kwh=("annualized_kwh", "sum"),
+        segment=("segment", lambda s: " + ".join(sorted(set(s)))),
+        segment_farms=("segment_farms", "min"),
+    )
+    quotable = grouped.median_kwh.apply(lambda s: s.notna().all())
+    totals = grouped.median_kwh.sum()
+    out["note_kwh"] = [round_kwh(totals[i]) if quotable[i] else ""
+                       for i in out.index]
+    return out.reset_index(drop=True)
+
+
 def assign_broiler(farms: pd.DataFrame) -> pd.DataFrame:
     farms["segment"] = "2 houses"
     for label, (lo, hi) in BROILER_BANDS:
@@ -101,14 +152,14 @@ def with_note_kwh(farms: pd.DataFrame) -> pd.DataFrame:
     counts = farms.groupby("segment").size()
     medians = farms.groupby("segment").annualized_kwh.median()
     farms["segment_farms"] = farms.segment.map(counts)
-    farms["note_kwh"] = farms.segment.map(
-        lambda s: round_kwh(medians[s]) if counts[s] >= MIN_SEGMENT else ""
-    )
+    # Kept numeric so a person's farms can be added together before rounding.
+    farms["median_kwh"] = farms.segment.map(
+        lambda s: medians[s] if counts[s] >= MIN_SEGMENT else float("nan"))
     return farms
 
 
 COLS = ["name", "mail_address", "city", "state", "zip_code", "service_address",
-        "district", "bird_type", "houses", "meters", "annualized_kwh",
+        "district", "bird_type", "houses", "farms", "meters", "annualized_kwh",
         "segment", "segment_farms", "note_kwh"]
 
 
@@ -118,8 +169,8 @@ def main() -> int:
 
     broiler, broiler_review = rollup(df, ["BROILER"])
     flyer, flyer_review = rollup(df, ["EGG", "PULLET", "BREEDER"])
-    broiler = assign_broiler(broiler)
-    flyer = assign_flyer(flyer)
+    broiler = collapse_to_recipients(assign_broiler(broiler))
+    flyer = collapse_to_recipients(assign_flyer(flyer))
 
     for name, cell in (("mail_list", broiler), ("mail_list_flyer", flyer)):
         cell.sort_values("annualized_kwh", ascending=False)[COLS].to_csv(
@@ -130,12 +181,17 @@ def main() -> int:
 
     for label, cell in (("broiler cell", broiler), ("flyer cell", flyer)):
         no_number = (cell.note_kwh == "").sum()
-        print(f"\n{label}: {len(cell)} farms, {int(cell.meters.sum())} meters")
+        print(f"\n{label}: {len(cell)} envelopes, "
+              f"{int(cell.farms.sum())} farms, {int(cell.meters.sum())} meters")
+        multi = (cell.farms > 1).sum()
+        print(f"  people with more than one farm: {multi}")
         print(f"  letters opening on a number: {len(cell) - no_number}")
         print(f"  letters opening on the bill: {no_number}")
-        print(cell.groupby("segment")
-                  .agg(farms=("name", "size"), note_kwh=("note_kwh", "first"))
-                  .to_string())
+        # Group on the figure as well as the segment. Two people can share a
+        # segment label and carry different totals, because one of them owns
+        # two farms in it.
+        print(cell.groupby(["segment", "houses", "note_kwh"], dropna=False)
+                  .size().rename("envelopes").to_string())
 
     print(f"\nheld for review: {len(review)} (meters disagree on house count)")
     print(f"wrote 3 files to {OUT}/. All hold personal data; out/ is gitignored.")

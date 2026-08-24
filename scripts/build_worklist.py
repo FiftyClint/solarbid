@@ -286,7 +286,7 @@ def main() -> int:
 
     OUT.write_text(page, encoding="utf-8")
     flagged = sum(1 for r in rows if r["flagged"])
-    print(f"wrote {OUT}: {len(rows)} farms "
+    print(f"wrote {OUT}: {len(rows)} envelopes "
           f"({sum(1 for r in rows if r['cell'] == 'broiler')} mailer, "
           f"{sum(1 for r in rows if r['cell'] == 'flyer')} flyer)")
     print(f"names flagged for Clint: {flagged}")
