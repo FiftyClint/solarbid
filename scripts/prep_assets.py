@@ -25,6 +25,11 @@ BAND_ASPECT = 1.75
 # by being cut this thin.
 WIDE_ASPECT = 4.6
 
+# The test flyer runs one photograph full bleed rather than a pair of strips.
+# A ground mount beside grain bins is the proof on that page, so it gets real
+# proportion instead of the letterbox the mailer settles for.
+HERO_ASPECT = 3.8
+
 # Source files as dropped in, with the vertical bias for the crop. Farm photos
 # carry a lot of sky that does nothing, so both bias downward toward the array.
 SOURCES = [
@@ -68,7 +73,8 @@ def main() -> int:
             print(f"skip {src_name}, not present")
             continue
         im = Image.open(src).convert("RGB")
-        for aspect, suffix in ((BAND_ASPECT, ""), (WIDE_ASPECT, "_wide")):
+        for aspect, suffix in ((BAND_ASPECT, ""), (WIDE_ASPECT, "_wide"),
+                               (HERO_ASPECT, "_hero")):
             out = crop_to_aspect(im, aspect, bias)
             name = out_name.replace(".jpg", f"{suffix}.jpg")
             out.save(ASSETS / name, quality=92)

@@ -64,6 +64,10 @@ PHOTO_TEAM = ASSETS / "cgf_team.jpg"
 PHOTO_GROUND = [ASSETS / "ground_mount_1.jpg", ASSETS / "ground_mount_2.jpg"]
 PHOTO_GROUND_WIDE = [ASSETS / "ground_mount_1_wide.jpg",
                      ASSETS / "ground_mount_2_wide.jpg"]
+# One frame, full bleed, for the test flyer. The second shot is the one with
+# grain bins and a truck in it, which reads as a working farm rather than as a
+# solar installation photographed on its own.
+PHOTO_HERO = ASSETS / "ground_mount_2_hero.jpg"
 
 
 

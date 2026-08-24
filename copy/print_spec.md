@@ -59,9 +59,18 @@ put the time into the letters.
 
 **Both printed pieces**
 
-- 8.5 x 11 in, portrait, no bleed. Content sits inside a 0.64 in margin, so
-  there is nothing to trim and nothing to lose at the edge.
-- Full colour. Both carry photographs and the blue is load-bearing.
+- 8.5 x 11 in, portrait, no bleed.
+- The mailer holds all content inside a 0.64 in margin, so there is nothing to
+  trim and nothing to lose at the edge.
+- The flyer runs a navy field and a photograph nearly full width. They stop
+  0.29 in short of the paper edge on purpose, because an office laser cannot
+  print to the edge and leaves an uneven white strip that reads as a misprint.
+  Print it at 100%, not "fit to page", or that margin grows and the balance
+  goes with it. Going to a commercial printer that takes real bleed? Set
+  BLEED = True at the top of scripts/build_test_flyer.py and re-run.
+- Full color. Both carry photographs and the blue is load-bearing. The flyer
+  also lays a large solid navy across the top: check the proof for banding, as
+  heavy solid coverage is where a tired laser shows itself first.
 - 28lb or 32lb text weight, uncoated, white or natural. Not gloss. Gloss reads
   as an advertisement, which is the register the whole piece is trying to avoid.
 - The mailer prints **duplex, flip on long edge**. Page 1 is how we work,

@@ -1,21 +1,28 @@
 #!/usr/bin/env python3
-"""Ogilvy-register test flyer for the layer, pullet and breeder cell.
+"""The test cell's flyer. 77 envelopes, 86 layer, pullet and breeder farms.
 
-Seventy-seven envelopes, 86 farms. The A/B against the informational mailer. Same offer, same facts, different
-register: a headline that has to earn the read on its own, long body copy in two
-columns, a photograph carrying a caption, and one low-friction close.
+This is the B side of an A/B, and the variable is register. The mailer is a
+document: type on white, hairline rules, photographs as a strip along the
+bottom. It is deliberately plain, because it travels with a handwritten note and
+a real stamp, and a glossy insert would expose the note as a device.
 
-Ogilvy's rules, the ones that apply here:
-  - The headline is most of the money. Make it specific and give it news.
-  - Long copy sells when the reader is interested. Do not trim to look clean.
-  - Captions get read about twice as often as body copy, so put a selling
-    point in the caption rather than a label.
-  - Serif body. Never be clever at the cost of being clear.
+So this page has to be visibly a different animal, or the test measures nothing.
+An earlier version failed that: same palette, same type, same rules, same photo
+strip, different copy structure. Two pieces that a grower would say came from the
+same company, because they did.
 
-Deliberately NOT solar-led. The layer load model is unvalidated, so the offer
-here is the bill analysis, which does not depend on bird type. The array appears
-once, low, captioned as the last step. That keeps this a test of register rather
-than a claim we cannot size.
+What carries the contrast:
+  - A navy field across the top with the figure set large in the brand green.
+    That green is unreadable on white, about 1.8:1, and excellent on this navy,
+    which is the only place the palette lets it be used at size.
+  - One photograph, full bleed, at real proportion rather than letterboxed.
+  - Three figures pulled out at display size instead of buried in sentences.
+  - Half the body copy the earlier version carried.
+
+Ogilvy's rules still hold underneath: the headline earns the read on its own, the
+caption carries a selling point rather than a label, and the close asks for one
+small thing. Not solar-led, because the layer load model is unvalidated and the
+offer here is the bill analysis, which does not depend on bird type.
 
     python scripts/build_test_flyer.py
 """
@@ -30,80 +37,51 @@ from matplotlib.image import imread  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
 
 from brand import (  # noqa: E402
-    ADDRESS, BRAND, EMAIL, Flow, INK, L, LOGO_PATH, MUTE, PAGE_H, PAGE_W,
-    PANEL, PAPER, PHONE, PHOTO_GROUND_WIDE, R, RULE_C, WEB,
+    ACCENT, ADDRESS, BRAND, EMAIL, Flow, INK, L, LOGO_PATH, MUTE, PAGE_H,
+    PAGE_W, PANEL, PAPER, PHONE, PHOTO_HERO, R, RULE_C, WEB,
 )
 
 HEAD = "Work Sans"
 SERIF = "IBM Plex Serif"
 MONO = "Geist Mono"
 
-GUTTER = 0.042
-COL_W = (R - L - GUTTER) / 2
-COL2_X = L + COL_W + GUTTER
+# The navy field and the photograph are the two full-width elements, and how far
+# they run depends on how this gets printed.
+#
+# An office laser cannot print to the paper edge. It leaves an unprintable strip
+# of four or five millimetres, and it is rarely even on all four sides, so a
+# design drawn to the edge comes back framed in a crooked white sliver that
+# reads as a misprint. A commercial run on oversized stock trims that away.
+#
+# False is the safe default and matches copy/print_spec.md, which recommends
+# printing this in the office: the two elements inset to a deliberate, even
+# margin instead. Set True only for a printer that is genuinely taking bleed.
+BLEED = False
+EDGE = 0.0 if BLEED else 0.034
+TOP = 1.0 if BLEED else 1.0 - EDGE * (PAGE_W / PAGE_H)
 
-# Every figure below is farm-grain, from the co-op account file, at the retail
-# rate in solarbid.config. Re-derive all of them after any change to the
-# workbook or the tariff: an earlier version of this page quoted dollars at 12
-# cents after the model moved to 11, mixed an all-non-broiler farm count with
-# egg-only quartiles, and stated a median that predated the farm-grain rollup.
-# The single-house egg band is the one quoted because that is the farm the
-# reader is being asked to compare, and 66 of the 86 farms in this cell are it.
-LEFT_COPY = [
-    ("head", "Where most farms land"),
-    ("body", "Metered usage on the 66 single-house egg farms in this area puts "
-             "the middle half between 88,986 and 131,871 kilowatt-hours a year. "
-             "The median house runs 107,958."),
-    ("body", "That is a narrow band for buildings of different ages, put up by "
-             "different people, running different birds. Pull your last twelve "
-             "bills and add up the kilowatt-hours. You will know in ten minutes "
-             "whether you sit inside it."),
-    ("head", "If you are above the band"),
-    ("body", "A farm sitting above a cluster that tight is usually not a "
-             "different kind of farm. It is the same kind of farm with "
-             "something wrong, and the something is more often on the bill than "
-             "in the barn."),
-    ("body", "Look at the demand line while you are in there. The median on "
-             "these farms is 31 kilowatts. A house billed well above that in a "
-             "month when nothing on the farm changed is worth a question."),
+# Every figure is farm-grain, from the co-op account file, at the retail rate in
+# solarbid.config. Re-derive all of them after any change to the workbook or the
+# tariff. The single-house egg band is the one quoted because that is the farm
+# the reader compares himself against, and 66 of the 86 in this cell are it.
+STATS = [
+    ("88,986 - 131,871", "kWh a year", "where the middle half of these farms land"),
+    ("107,958", "kWh a year", "what the median single egg house runs"),
+    ("31 kW", "demand", "median billed demand on the same farms"),
 ]
 
-RIGHT_COPY = [
-    ("head", "What tends to be wrong"),
-    ("body", "A rate class that fit the farm in 2011 and does not fit how it "
-             "runs now. A meter multiplier applied twice. Demand set by one bad "
-             "reading in July and carried on every bill for a year. Sales tax "
-             "charged on power the farm may be exempt from."),
-    ("body", "None of that is exotic. It is arithmetic, and it is sitting on "
-             "paper you already receive every month."),
-    ("head", "What we do about it"),
-    ("body", "We read twelve months of billing line by line. What turns up "
-             "there is money back with no capital spent and nothing bought. "
-             "Then we look at where the power actually goes, which on a poultry "
-             "farm is mostly ventilation, and what it would cost to use less."),
-    ("body", "Only then do we look at what is available to pay for the work. "
-             "Qualifying for an incentive and collecting one are two different "
-             "jobs, and the second is where most of the money gets lost."),
+BODY = [
+    "Pull your last twelve bills and add up the kilowatt-hours. Ten minutes, "
+    "and you will know whether you sit inside that band.",
+
+    "A farm above it is usually the same kind of farm with something wrong, and "
+    "the something is more often on the bill than in the barn. A rate class "
+    "that fit in 2011. A multiplier applied twice. Demand set by one bad July "
+    "reading and carried all year.",
+
+    "We read twelve months line by line, then look at where the power goes and "
+    "what it would cost to use less.",
 ]
-
-
-def col_head(flow, title):
-    flow.gap(0.021)
-    flow.ax.text(flow.x0, flow.y, title, family=HEAD, weight="bold", size=10.5,
-                 color=BRAND, ha="left", va="baseline")
-    flow.gap(0.010)
-    flow.ax.plot([flow.x0, flow.x1], [flow.y, flow.y], color=RULE_C, lw=0.7,
-                 solid_capstyle="butt")
-    flow.gap(0.004)
-
-
-def render_column(flow, blocks):
-    for kind, text in blocks:
-        if kind == "head":
-            col_head(flow, text)
-        else:
-            flow.text(text, SERIF, 9.0, leading=1.46, gap_after=0.008)
-    return flow.y
 
 
 def main():
@@ -115,68 +93,86 @@ def main():
     ax.axis("off")
     fig.canvas.draw()
 
-    # No masthead band. Ogilvy put the advertiser's mark small and late; a
-    # branded bar across the top announces an ad before the headline gets a
-    # chance to earn the read.
-    flow = Flow(fig, ax, 0.955)
+    # Type sits on the page margin unless that would crowd the field edge.
+    FL = max(L, EDGE + 0.030)
 
-    flow.text("About $12,000 a year to run one egg house. How much of that "
-              "is a billing mistake?", SERIF, 24, weight="bold", leading=1.16,
-              gap_after=0.012)
-    flow.text("A year of metered usage on 176 poultry farms in Randolph and "
-              "Clay counties shows where a house like yours should sit. If "
-              "yours sits above it, the reason is usually on paper.",
-              SERIF, 11.8, color=MUTE, leading=1.40, gap_after=0.010)
+    # ------------------------------------------------------------ navy field
+    FIELD_BOT = 0.762
+    ax.add_patch(Rectangle((EDGE, FIELD_BOT), 1 - 2 * EDGE, TOP - FIELD_BOT,
+                           facecolor=INK, edgecolor="none", zorder=0))
 
-    ax.plot([L, R], [flow.y, flow.y], color=INK, lw=1.4, solid_capstyle="butt")
-    flow.gap(0.004)
+    ax.text(FL, 0.956, "METERED USAGE  ·  66 EGG FARMS  ·  RANDOLPH AND CLAY "
+            "COUNTIES", family=MONO, size=7.0, color="#7FA8CC", ha="left",
+            va="center", zorder=2)
 
-    # ---------------------------------------------------------------- columns
-    top = flow.y
-    left = Flow(fig, ax, top, x0=L, x1=L + COL_W)
-    right = Flow(fig, ax, top, x0=COL2_X, x1=R)
-    y_left = render_column(left, LEFT_COPY)
-    y_right = render_column(right, RIGHT_COPY)
-    print(f"columns end at left={y_left:.3f} right={y_right:.3f}")
+    # The one figure on the page set at size, and the only place the palette
+    # allows the green to carry text.
+    ax.text(FL, 0.893, "$12,000", family=HEAD, weight="bold", size=58,
+            color=ACCENT, ha="left", va="center", zorder=2)
+    ax.text(FL, 0.848, "a year to run one egg house.", family=SERIF, size=15.5,
+            color="#C9DCEC", ha="left", va="center", zorder=2)
 
-    flow.y = min(y_left, y_right)
+    head = Flow(fig, ax, 0.824, x0=FL, x1=R - 0.02)
+    head.text("How much of that is a billing mistake?", SERIF, 23,
+              weight="bold", color=PAPER, leading=1.18)
+    print(f"headline ends at y={head.y:.3f} (field bottom {FIELD_BOT})")
 
-    # ----------------------------------------------------------------- photo
-    have = [p for p in PHOTO_GROUND_WIDE if p.exists()]
-    if have:
-        flow.gap(0.018)
-        gap = 0.014
-        w = ((R - L) - gap * (len(have) - 1)) / len(have)
-        height = w * (PAGE_W / PAGE_H) / 4.6
-        top_y = flow.y
-        for i, path in enumerate(have):
-            x0 = L + i * (w + gap)
-            ax.imshow(imread(str(path)),
-                      extent=(x0, x0 + w, top_y - height, top_y),
-                      aspect="auto", zorder=2)
-        flow.gap(height + 0.011)
-        # The caption gets read about twice as often as the body, so it carries
-        # a point rather than naming the picture.
-        flow.text("Arrays NEA Solar built for growers in this area. This is the "
-                  "last thing we do, and only if the first four say it is worth "
-                  "doing.", SERIF, 9.0, color=MUTE, leading=1.4)
+    # ----------------------------------------------------------- photograph
+    photo_top = FIELD_BOT
+    if PHOTO_HERO.exists():
+        img = imread(str(PHOTO_HERO))
+        width = 1 - 2 * EDGE
+        height = width * (PAGE_W / PAGE_H) / (img.shape[1] / img.shape[0])
+        ax.imshow(img, extent=(EDGE, EDGE + width, photo_top - height,
+                               photo_top), aspect="auto", zorder=1)
+        photo_bot = photo_top - height
+    else:
+        photo_bot = photo_top
+
+    flow = Flow(fig, ax, photo_bot - 0.016)
+    # Captions get read about twice as often as body copy, so this one carries a
+    # point rather than naming the picture.
+    flow.text("A ground mount NEA Solar built near here. It is the last thing "
+              "we do, and only if the first four say it is worth doing.",
+              SERIF, 9.0, color=MUTE, leading=1.4)
+
+    # ------------------------------------------------------------ stat strip
+    flow.gap(0.020)
+    strip_top = flow.y
+    pad = 0.013
+    col = (R - L) / 3
+    for i, (big, unit, note) in enumerate(STATS):
+        x = L + i * col
+        ax.text(x, strip_top - pad - 0.006, big, family=HEAD, weight="bold",
+                size=17, color=BRAND, ha="left", va="center", zorder=2)
+        ax.text(x, strip_top - pad - 0.030, unit, family=MONO, size=6.6,
+                color=MUTE, ha="left", va="center", zorder=2)
+        sub = Flow(fig, ax, strip_top - pad - 0.043, x0=x, x1=x + col - 0.02)
+        sub.text(note, SERIF, 8.6, color=INK, leading=1.36)
+        bottom = sub.y
+    strip_bot = bottom - pad
+    ax.add_patch(Rectangle((L, strip_bot), R - L, strip_top - strip_bot,
+                           facecolor=PANEL, edgecolor="none", zorder=0))
+    flow.y = strip_bot
+
+    # ------------------------------------------------------------------ body
+    flow.gap(0.020)
+    for i, para in enumerate(BODY):
+        flow.text(para, SERIF, 10.0, leading=1.46,
+                  gap_after=0.010 if i < len(BODY) - 1 else 0.0)
+    print(f"body ends at y={flow.y:.3f}")
 
     # ----------------------------------------------------------------- close
-    flow.gap(0.016)
-    box_top = flow.y
-    pad = 0.017
-    inner = Flow(fig, ax, box_top - pad, x0=L + 0.024, x1=R - 0.024)
-    inner.text("Send us twelve months of your billing history.", SERIF, 15,
-               weight="bold", color=INK, leading=1.25, gap_after=0.008)
-    inner.text(f"Email it to {EMAIL}. Photographs of the bills are fine. We "
-               "will read them and tell you what we find, including the "
-               "possibility that we find nothing worth doing. That answer is "
-               "free as well.", SERIF, 9.8, color=INK, leading=1.46)
-    box_bottom = inner.y - pad
-    ax.add_patch(Rectangle((L, box_bottom), R - L, box_top - box_bottom,
-                           facecolor=PANEL, edgecolor="none", zorder=0))
-    flow.y = box_bottom
-    print(f"close box bottom at y={flow.y:.3f}")
+    flow.gap(0.018)
+    ax.plot([L, R], [flow.y, flow.y], color=ACCENT, lw=3.0,
+            solid_capstyle="butt")
+    flow.gap(0.018)
+    flow.text("Send us twelve months of your billing history.", SERIF, 15.5,
+              weight="bold", color=INK, leading=1.24, gap_after=0.008)
+    flow.text(f"Email it to {EMAIL}. Photographs of the bills are fine. We will "
+              "tell you what we find, including if that is nothing worth doing. "
+              "That answer is free too.", SERIF, 9.8, color=INK, leading=1.44)
+    print(f"close ends at y={flow.y:.3f}")
 
     # ---------------------------------------------------------------- footer
     if LOGO_PATH.exists():
