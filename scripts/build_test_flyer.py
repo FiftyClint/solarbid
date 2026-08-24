@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Ogilvy-register test flyer for the 88 layer, pullet and breeder farms.
+"""Ogilvy-register test flyer for the layer, pullet and breeder cell.
 
-The A/B against the informational mailer. Same offer, same facts, different
+Seventy-seven envelopes, 86 farms. The A/B against the informational mailer. Same offer, same facts, different
 register: a headline that has to earn the read on its own, long body copy in two
 columns, a photograph carrying a caption, and one low-friction close.
 
@@ -42,14 +42,18 @@ GUTTER = 0.042
 COL_W = (R - L - GUTTER) / 2
 COL2_X = L + COL_W + GUTTER
 
-# Every figure below is farm-grain median from the co-op account file, derived
-# the same way as the mailer table. Regenerate with scripts/segment_table.py
-# style rollup if the workbook changes.
+# Every figure below is farm-grain, from the co-op account file, at the retail
+# rate in solarbid.config. Re-derive all of them after any change to the
+# workbook or the tariff: an earlier version of this page quoted dollars at 12
+# cents after the model moved to 11, mixed an all-non-broiler farm count with
+# egg-only quartiles, and stated a median that predated the farm-grain rollup.
+# The single-house egg band is the one quoted because that is the farm the
+# reader is being asked to compare, and 66 of the 86 farms in this cell are it.
 LEFT_COPY = [
     ("head", "Where most farms land"),
-    ("body", "Metered usage on the 88 layer, pullet and breeder farms in this "
-             "area puts the middle half between 89,832 and 138,000 "
-             "kilowatt-hours a year. The median house runs 112,368."),
+    ("body", "Metered usage on the 66 single-house egg farms in this area puts "
+             "the middle half between 88,986 and 131,871 kilowatt-hours a year. "
+             "The median house runs 107,958."),
     ("body", "That is a narrow band for buildings of different ages, put up by "
              "different people, running different birds. Pull your last twelve "
              "bills and add up the kilowatt-hours. You will know in ten minutes "
@@ -116,7 +120,7 @@ def main():
     # chance to earn the read.
     flow = Flow(fig, ax, 0.955)
 
-    flow.text("About $13,500 a year to run one egg house. How much of that "
+    flow.text("About $12,000 a year to run one egg house. How much of that "
               "is a billing mistake?", SERIF, 24, weight="bold", leading=1.16,
               gap_after=0.012)
     flow.text("A year of metered usage on 176 poultry farms in Randolph and "
