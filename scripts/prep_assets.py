@@ -28,7 +28,7 @@ WIDE_ASPECT = 4.6
 # The test flyer runs one photograph full bleed rather than a pair of strips.
 # A ground mount beside grain bins is the proof on that page, so it gets real
 # proportion instead of the letterbox the mailer settles for.
-HERO_ASPECT = 3.8
+HERO_ASPECT = 4.4
 
 # Source files as dropped in, with the vertical bias for the crop. Farm photos
 # carry a lot of sky that does nothing, so both bias downward toward the array.

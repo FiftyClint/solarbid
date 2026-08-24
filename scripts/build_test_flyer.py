@@ -37,12 +37,18 @@ from matplotlib.image import imread  # noqa: E402
 from matplotlib.patches import Rectangle  # noqa: E402
 
 from brand import (  # noqa: E402
-    ACCENT, ADDRESS, BRAND, EMAIL, Flow, INK, L, LOGO_PATH, MUTE, PAGE_H,
-    PAGE_W, PANEL, PAPER, PHONE, PHOTO_HERO, R, RULE_C, WEB,
+    ACCENT, ADDRESS, EMAIL, Flow, INK, L, LOGO_PATH, measure, MUTE, PAGE_H,
+    PAGE_W, PAPER, PHONE, PHOTO_HERO, R, WEB,
 )
 
-HEAD = "Work Sans"
-SERIF = "IBM Plex Serif"
+# Type is what dated the earlier version. IBM Plex Serif body copy reads
+# institutional, which is right for the mailer and wrong for the piece that is
+# supposed to look like marketing. Bricolage Grotesque carries the display, and
+# Instrument Sans the body: a sans text face, a wide type-scale range, and no
+# panel boxes is roughly what separates a page made this year from one made
+# fifteen years ago.
+DISPLAY = "Bricolage Grotesque"
+BODY = "Instrument Sans"
 MONO = "Geist Mono"
 
 # The navy field and the photograph are the two full-width elements, and how far
@@ -64,13 +70,17 @@ TOP = 1.0 if BLEED else 1.0 - EDGE * (PAGE_W / PAGE_H)
 # solarbid.config. Re-derive all of them after any change to the workbook or the
 # tariff. The single-house egg band is the one quoted because that is the farm
 # the reader compares himself against, and 66 of the 86 in this cell are it.
+# The band is rounded in the display slot because 88,986 - 131,871 is seventeen
+# characters and will not set at 26pt in a third of the measure. The exact
+# figures go in the line underneath, where they are still checkable.
 STATS = [
-    ("88,986 - 131,871", "kWh a year", "where the middle half of these farms land"),
-    ("107,958", "kWh a year", "what the median single egg house runs"),
-    ("31 kW", "demand", "median billed demand on the same farms"),
+    ("89k - 132k", "KWH A YEAR",
+     "where the middle half land, 88,986 to 131,871"),
+    ("107,958", "KWH A YEAR", "what the median single egg house runs"),
+    ("31", "KW DEMAND", "median billed on the same farms"),
 ]
 
-BODY = [
+COPY = [
     "Pull your last twelve bills and add up the kilowatt-hours. Ten minutes, "
     "and you will know whether you sit inside that band.",
 
@@ -97,24 +107,24 @@ def main():
     FL = max(L, EDGE + 0.030)
 
     # ------------------------------------------------------------ navy field
-    FIELD_BOT = 0.762
+    FIELD_BOT = 0.754
     ax.add_patch(Rectangle((EDGE, FIELD_BOT), 1 - 2 * EDGE, TOP - FIELD_BOT,
                            facecolor=INK, edgecolor="none", zorder=0))
 
-    ax.text(FL, 0.956, "METERED USAGE  ·  66 EGG FARMS  ·  RANDOLPH AND CLAY "
-            "COUNTIES", family=MONO, size=7.0, color="#7FA8CC", ha="left",
+    ax.text(FL, 0.956, "METERED USAGE   66 EGG FARMS   RANDOLPH AND CLAY "
+            "COUNTIES", family=MONO, size=6.6, color="#6E97BC", ha="left",
             va="center", zorder=2)
 
     # The one figure on the page set at size, and the only place the palette
     # allows the green to carry text.
-    ax.text(FL, 0.893, "$12,000", family=HEAD, weight="bold", size=58,
+    ax.text(FL, 0.888, "$12,000", family=DISPLAY, weight="bold", size=76,
             color=ACCENT, ha="left", va="center", zorder=2)
-    ax.text(FL, 0.848, "a year to run one egg house.", family=SERIF, size=15.5,
-            color="#C9DCEC", ha="left", va="center", zorder=2)
+    ax.text(FL, 0.836, "a year to run one egg house.", family=BODY, size=14,
+            color="#A9C4DC", ha="left", va="center", zorder=2)
 
-    head = Flow(fig, ax, 0.824, x0=FL, x1=R - 0.02)
-    head.text("How much of that is a billing mistake?", SERIF, 23,
-              weight="bold", color=PAPER, leading=1.18)
+    head = Flow(fig, ax, 0.812, x0=FL, x1=R - 0.06)
+    head.text("How much of that is a billing mistake?", DISPLAY, 25,
+              weight="bold", color=PAPER, leading=1.14)
     print(f"headline ends at y={head.y:.3f} (field bottom {FIELD_BOT})")
 
     # ----------------------------------------------------------- photograph
@@ -134,32 +144,32 @@ def main():
     # point rather than naming the picture.
     flow.text("A ground mount NEA Solar built near here. It is the last thing "
               "we do, and only if the first four say it is worth doing.",
-              SERIF, 9.0, color=MUTE, leading=1.4)
+              BODY, 8.6, color=MUTE, leading=1.4, max_w=0.60)
 
     # ------------------------------------------------------------ stat strip
-    flow.gap(0.020)
+    flow.gap(0.026)
+    ax.plot([L, R], [flow.y, flow.y], color=INK, lw=1.1, solid_capstyle="butt")
+    flow.gap(0.026)
     strip_top = flow.y
-    pad = 0.013
     col = (R - L) / 3
     for i, (big, unit, note) in enumerate(STATS):
         x = L + i * col
-        ax.text(x, strip_top - pad - 0.006, big, family=HEAD, weight="bold",
-                size=17, color=BRAND, ha="left", va="center", zorder=2)
-        ax.text(x, strip_top - pad - 0.030, unit, family=MONO, size=6.6,
+        # The unit sits under the figure rather than beside it. Set alongside,
+        # the widest value ran into the next column's number.
+        ax.text(x, strip_top, big, family=DISPLAY, weight="bold", size=26,
+                color=INK, ha="left", va="center", zorder=2)
+        ax.text(x, strip_top - 0.023, unit, family=MONO, size=6.4,
                 color=MUTE, ha="left", va="center", zorder=2)
-        sub = Flow(fig, ax, strip_top - pad - 0.043, x0=x, x1=x + col - 0.02)
-        sub.text(note, SERIF, 8.6, color=INK, leading=1.36)
+        sub = Flow(fig, ax, strip_top - 0.040, x0=x, x1=x + col - 0.030)
+        sub.text(note, BODY, 8.4, color=MUTE, leading=1.40)
         bottom = sub.y
-    strip_bot = bottom - pad
-    ax.add_patch(Rectangle((L, strip_bot), R - L, strip_top - strip_bot,
-                           facecolor=PANEL, edgecolor="none", zorder=0))
-    flow.y = strip_bot
+    flow.y = bottom
 
     # ------------------------------------------------------------------ body
-    flow.gap(0.020)
-    for i, para in enumerate(BODY):
-        flow.text(para, SERIF, 10.0, leading=1.46,
-                  gap_after=0.010 if i < len(BODY) - 1 else 0.0)
+    flow.gap(0.030)
+    for i, para in enumerate(COPY):
+        flow.text(para, BODY, 10.0, leading=1.54, max_w=0.70,
+                  gap_after=0.012 if i < len(COPY) - 1 else 0.0)
     print(f"body ends at y={flow.y:.3f}")
 
     # ----------------------------------------------------------------- close
@@ -167,11 +177,12 @@ def main():
     ax.plot([L, R], [flow.y, flow.y], color=ACCENT, lw=3.0,
             solid_capstyle="butt")
     flow.gap(0.018)
-    flow.text("Send us twelve months of your billing history.", SERIF, 15.5,
-              weight="bold", color=INK, leading=1.24, gap_after=0.008)
+    flow.text("Send us twelve months of your billing history.", DISPLAY, 18,
+              weight="bold", color=INK, leading=1.20, gap_after=0.012)
     flow.text(f"Email it to {EMAIL}. Photographs of the bills are fine. We will "
               "tell you what we find, including if that is nothing worth doing. "
-              "That answer is free too.", SERIF, 9.8, color=INK, leading=1.44)
+              "That answer is free too.", BODY, 9.8, color=INK, leading=1.52,
+              max_w=0.62)
     print(f"close ends at y={flow.y:.3f}")
 
     # ---------------------------------------------------------------- footer
@@ -181,11 +192,11 @@ def main():
         w = h * (img.shape[1] / img.shape[0]) * (PAGE_H / PAGE_W)
         ax.imshow(img, extent=(L, L + w, 0.026, 0.026 + h), zorder=3,
                   aspect="auto")
-    ax.text(R, 0.048, "Cleaner Greener Future, with NEA Solar", family=HEAD,
-            weight="bold", size=9.2, color=INK, ha="right", va="center")
-    ax.text(R, 0.032, f"{PHONE}   ·   {WEB}", family=HEAD, size=8.4,
+    ax.text(R, 0.048, "Cleaner Greener Future, with NEA Solar", family=BODY,
+            weight="bold", size=9.0, color=INK, ha="right", va="center")
+    ax.text(R, 0.032, f"{PHONE}    {WEB}", family=BODY, size=8.2,
             color=MUTE, ha="right", va="center")
-    ax.text(R, 0.018, ADDRESS, family=HEAD, size=8.4, color=MUTE, ha="right",
+    ax.text(R, 0.018, ADDRESS, family=BODY, size=8.2, color=MUTE, ha="right",
             va="center")
 
     out_pdf = Path("out/cgf_test_flyer.pdf")
