@@ -6,8 +6,11 @@ people, and 25 of them own more than one.
 
 | cell | envelopes | printed piece | pages | sheets |
 |---|---|---|---|---|
-| broiler | 58 | `out/cgf_mailer.pdf` | 2, duplex | 58 |
-| flyer | 77 | `out/cgf_test_flyer.pdf` | 1, single side | 77 |
+| broiler | 58 | `out/home_print/CGF_Mailer_2page_HOMEPRINT.pdf` | 2, duplex | 58 |
+| flyer | 77 | `out/home_print/CGF_Farm_Energy_Review_HOMEPRINT.pdf` | 1, single side | 77 |
+
+The Canva pieces above are what goes in the envelopes. The Python-built
+`out/cgf_mailer.pdf` and `out/cgf_test_flyer.pdf` stay as fallbacks.
 
 Plus 135 blank note cards and 135 envelopes, both written by hand.
 
@@ -19,63 +22,68 @@ single sided.
 
 ## What it actually costs
 
-The job is 193 color sides, not 135 prints. The mailer is duplex, so each
-broiler sheet is two.
+193 color sides, not 135 prints, because the mailer is duplex. Printing at home
+the cash cost is ink or toner rather than a per-side price, so the ink note
+under Specification matters more than any table of vendor rates.
 
-| | per side | total |
-|---|---|---|
-| retail counter (FedEx, Staples, UPS Store) | $1.00 | $193 |
-| retail, negotiated at volume | $0.60 | $116 |
-| online short run, 3 to 7 days | ~$0.35 | ~$68 |
-| in-house colour laser, consumables only | ~$0.10 | ~$19 |
+Envelopes, blank cards and 135 stamps put the campaign somewhere around $200 to
+$300 all in. Check the current first-class rate rather than trusting a number
+from here.
 
-Add envelopes, blank cards and 135 stamps, and the whole campaign lands
-somewhere between $200 and $350 depending on which row you pick. Check the
-current first-class rate rather than trusting a number from here.
-
-## Recommendation
-
-**Both pieces are static.** Every broiler mailer is identical to every other
-broiler mailer, and every flyer is identical to every other flyer. All the
-personalization is in the handwriting. That matters because it is exactly the
-job short-run printing is cheap at: two SKUs, no variable data, no proofs per
-record.
-
-So: **if there is a colour laser in the Overland Park office, run it there.**
-About $24 of toner, and a reprint after the flyer test is an afternoon.
-
-If there is not, **order both pieces from an online short-run printer**, not
-from the counter. The counter is the $244 option and it buys nothing here except
-same-day, which this campaign does not need. Handwriting 135 letters is the long
-pole, not printing.
-
-**Do not optimize this line.** The spread between the cheapest and most
-expensive route is about $175 across 135 growers. One four-house farm converting
-is a $315,000 project. Spending an afternoon shaving print cost is the worst
-paid work available in this campaign. Pick a route, order the good stock, and
-put the time into the letters.
+**Do not optimize this line.** One four-house farm converting is a $315,000
+project. An afternoon spent shaving print cost is the worst paid work available
+in this campaign.
 
 ## Specification
 
-**Both printed pieces**
+**Printing at home**
 
-- 8.5 x 11 in, portrait, no bleed.
-- The mailer holds all content inside a 0.64 in margin, so there is nothing to
-  trim and nothing to lose at the edge.
-- The flyer runs a navy field and a photograph nearly full width. They stop
-  0.29 in short of the paper edge on purpose, because an office laser cannot
-  print to the edge and leaves an uneven white strip that reads as a misprint.
-  Print it at 100%, not "fit to page", or that margin grows and the balance
-  goes with it. Going to a commercial printer that takes real bleed? Set
-  BLEED = True at the top of scripts/build_test_flyer.py and re-run.
-- Full color. Both carry photographs and the blue is load-bearing. The flyer
-  also lays a large solid navy across the top: check the proof for banding, as
-  heavy solid coverage is where a tired laser shows itself first.
+The Canva pieces bleed to the paper edge and no home printer can put ink there.
+It holds back about 0.17in on the sides and often more at the foot, rarely
+equally on all four, so a full-bleed page comes back framed in a lopsided white
+sliver that reads as a misprint.
+
+Use the files in `out/home_print/`. Same designs, scaled to 0.941 and centred
+inside a 0.25in safe margin, so the white frame is even and reads as a border.
+Regenerate after any new export:
+
+    python scripts/prep_home_print.py path/to/design.pdf
+
+**Print at 100%, not "fit to page".** The driver would shrink an already-shrunk
+page again and the margin would stop being even.
+
+**Two things a home printer does to these that a commercial one would not**
+
+- *Ink.* The review sheet is 35% dark coverage, the mailer front 19%, the back
+  13%. On an inkjet, 77 sheets of near-solid navy is slow and genuinely
+  expensive, and cartridges empty faster than the page count suggests. A laser
+  handles it far better. On an inkjet, print ten, look at the cartridge, and
+  decide before committing to the rest.
+- *Banding.* Large solid navy is where a tired printer shows itself first. Check
+  a proof for streaks across the dark field before running the lot.
+
+**Resolution, worth fixing at source**
+
+The pages are flattened images rather than live type, so what was exported is
+what prints:
+
+| page | pixels | effective |
+|---|---|---|
+| Review sheet | 2550 x 3300 | 300 DPI, good |
+| Mailer front | 1530 x 1980 | 180 DPI, slightly soft |
+| Mailer back | 1086 x 1448 | **128 DPI, visibly soft** |
+
+The mailer back carries every figure, and 128 DPI is where small type starts to
+look furry on paper. Re-export that page at 300 DPI before running 58 of them.
+Nothing else needs redoing.
+
+**Both pieces**
+
+- 8.5 x 11 in, portrait.
 - 28lb or 32lb text weight, uncoated, white or natural. Not gloss. Gloss reads
   as an advertisement, which is the register the whole piece is trying to avoid.
-- The mailer prints **duplex, flip on long edge**. Page 1 is how we work,
-  page 2 is the solar example, and the copy on page 1 says "the back of this
-  page." Printed as two loose sheets it stops making sense.
+- The mailer prints **duplex, flip on long edge**. Front is how we work, back is
+  the numbers. Printed as two loose sheets it stops making sense.
 
 **Note cards**
 
